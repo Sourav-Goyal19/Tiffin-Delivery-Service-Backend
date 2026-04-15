@@ -1,10 +1,12 @@
 package com.example.tds.service;
 
+import com.example.tds.dto.requests.UpdateLocationRequest;
 import com.example.tds.dto.requests.UserLoginRequest;
 import com.example.tds.dto.requests.UserSignUpRequest;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
 import com.example.tds.exception.BadRequestException;
+import com.example.tds.exception.ResourceNotFoundException;
 import com.example.tds.exception.UnauthorizedException;
 import com.example.tds.mapper.UserMapper;
 import com.example.tds.repository.UserRepository;
@@ -12,10 +14,12 @@ import com.example.tds.utilities.JwtUtility;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.geo.Point;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -103,5 +107,21 @@ public class UserService {
         response.setAccessToken(newAccessToken);
 
         return response;
+    }
+
+    public UserResponse handleUpdateLocation(UUID userId, UpdateLocationRequest locationRequest){
+        UserEntity existingUser = userRepository.findById(userId)
+                .orElseThrow(()->new ResourceNotFoundException("User not found"));
+
+        userRepository.updateLocation(
+                userId,
+                locationRequest.getAddress(),
+                locationRequest.getLongitude(),
+                locationRequest.getLatitude()
+        );
+
+        UserEntity updatedUser = userRepository.findByemail(existingUser.getEmail());
+
+        return userMapper.toUserResponse(updatedUser);
     }
 }

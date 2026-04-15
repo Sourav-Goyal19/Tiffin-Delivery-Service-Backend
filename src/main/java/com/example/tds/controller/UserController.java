@@ -1,6 +1,7 @@
 package com.example.tds.controller;
 
 import com.example.tds.dto.requests.RefreshTokenRequest;
+import com.example.tds.dto.requests.UpdateLocationRequest;
 import com.example.tds.dto.requests.UserLoginRequest;
 import com.example.tds.dto.requests.UserSignUpRequest;
 import com.example.tds.dto.responses.ApiResponse;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -87,4 +89,18 @@ public class UserController {
         );
     }
 
+    @PatchMapping("/{userId}/location")
+    public ResponseEntity<ApiResponse> updateLocation(@PathVariable("userId") UUID userId, @RequestBody @Valid UpdateLocationRequest locationRequest){
+        UserResponse response = userService.handleUpdateLocation(userId, locationRequest);
+
+        Map<String, Object> data = Map.of("user", response);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Location updated successfully")
+                        .success(true)
+                        .data(data)
+                        .build()
+        );
+    }
 }
