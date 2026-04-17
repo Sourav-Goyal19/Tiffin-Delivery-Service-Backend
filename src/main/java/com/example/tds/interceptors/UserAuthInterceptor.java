@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
-public class AuthInterceptor implements HandlerInterceptor {
-    private static final Logger log = LoggerFactory.getLogger(AuthInterceptor.class);
+public class UserAuthInterceptor implements HandlerInterceptor {
+    private static final Logger log = LoggerFactory.getLogger(UserAuthInterceptor.class);
     @Autowired
     private JwtUtility jwtUtil;
     @Autowired
@@ -54,7 +54,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         Claims claims = jwtUtil.extractAllClaims(accessToken);
         String email = claims.get("email", String.class);
 
-        UserEntity userEntity = userRepository.findByemail(email);
+        UserEntity userEntity = userRepository.findByEmail(email);
 
         if (userEntity == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);

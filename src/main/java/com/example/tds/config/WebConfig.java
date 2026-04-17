@@ -1,6 +1,7 @@
 package com.example.tds.config;
 
-import com.example.tds.interceptors.AuthInterceptor;
+import com.example.tds.interceptors.ChefAuthInterceptor;
+import com.example.tds.interceptors.UserAuthInterceptor;
 import com.example.tds.interceptors.LogInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -12,14 +13,16 @@ import java.util.List;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
    @Autowired
-   private AuthInterceptor authInterceptor;
+   private UserAuthInterceptor userAuthInterceptor;
    @Autowired
    private LogInterceptor logInterceptor;
+   @Autowired
+   private ChefAuthInterceptor chefAuthInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry){
-        registry.addInterceptor(authInterceptor)
-                .addPathPatterns("/api/**")
+        registry.addInterceptor(userAuthInterceptor)
+                .addPathPatterns("/api/users/**")
                 .excludePathPatterns(
                         List.of(
                                 "/api/users/login",
@@ -30,5 +33,16 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addInterceptor(logInterceptor)
                 .addPathPatterns("/api/**");
+
+        registry.addInterceptor(chefAuthInterceptor)
+                .addPathPatterns("/api/chefs/**")
+                .excludePathPatterns(
+                        List.of(
+                                "/api/chefs/otp/generate",
+                                "/api/chefs/otp/verify",
+                                "/api/chefs/signup",
+                                "/api/chefs/refresh"
+                        )
+                );
     }
 }

@@ -14,7 +14,6 @@ import com.example.tds.utilities.JwtUtility;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.geo.Point;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +36,7 @@ public class UserService {
         UserEntity user = userMapper.toUserEntity(signUpDto);
 
         String email = user.getEmail();
-        UserEntity existingUser = userRepository.findByemail(email);
+        UserEntity existingUser = userRepository.findByEmail(email);
 
         if(existingUser != null){
             throw new BadRequestException("This email already exists.");
@@ -54,7 +53,7 @@ public class UserService {
     public UserResponse handleLogin(UserLoginRequest loginDto){
         UserEntity user = userMapper.toUserEntity(loginDto);
 
-        UserEntity existingUser = userRepository.findByemail(user.getEmail());
+        UserEntity existingUser = userRepository.findByEmail(user.getEmail());
 
         if (existingUser == null){
             throw new BadRequestException("No existing user found");
@@ -120,7 +119,7 @@ public class UserService {
                 locationRequest.getLatitude()
         );
 
-        UserEntity updatedUser = userRepository.findByemail(existingUser.getEmail());
+        UserEntity updatedUser = userRepository.findByEmail(existingUser.getEmail());
 
         return userMapper.toUserResponse(updatedUser);
     }
