@@ -1,8 +1,8 @@
 package com.example.tds.service;
 
 import com.example.tds.dto.requests.UpdateLocationRequest;
-import com.example.tds.dto.requests.UserLoginRequest;
-import com.example.tds.dto.requests.UserSignUpRequest;
+import com.example.tds.dto.requests.users.UserLoginRequest;
+import com.example.tds.dto.requests.users.UserSignUpRequest;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
 import com.example.tds.exception.BadRequestException;

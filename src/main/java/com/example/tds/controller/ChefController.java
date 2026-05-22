@@ -1,5 +1,6 @@
 package com.example.tds.controller;
 
+import com.example.tds.dto.requests.chefs.ChefSignUpRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,7 @@ public class ChefController {
 
         Map<String, Object> data = Map.of("chef", response);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.builder()
                         .message("OTP verified successfully")
                         .data(data)
@@ -74,7 +75,6 @@ public class ChefController {
                 ApiResponse.builder()
                         .message("OTP generated successfully")
                         .success(true)
-                        .data(Map.of())
                         .build()
         );
     }

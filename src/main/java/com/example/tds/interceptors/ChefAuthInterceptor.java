@@ -9,6 +9,7 @@ import com.example.tds.utilities.JwtUtility;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class ChefAuthInterceptor implements HandlerInterceptor {
     private ChefRepository chefRepository;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception{
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, Object handler) throws Exception{
 //        log.info("Passed from auth middleware");
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

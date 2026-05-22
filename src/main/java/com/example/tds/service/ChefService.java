@@ -11,13 +11,14 @@ import com.example.tds.repository.ChefRepository;
 import com.example.tds.dto.responses.ChefResponse;
 import com.example.tds.dto.requests.OtpVerifyRequest;
 import com.example.tds.exception.BadRequestException;
-import com.example.tds.dto.requests.ChefSignUpRequest;
+import com.example.tds.dto.requests.chefs.ChefSignUpRequest;
 import com.example.tds.exception.UnauthorizedException;
 import com.example.tds.dto.requests.OtpGenerationRequest;
 import com.example.tds.dto.requests.UpdateLocationRequest;
 import com.example.tds.exception.ResourceNotFoundException;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -34,6 +35,12 @@ public class ChefService {
 
     public ChefResponse handleSignUp(ChefSignUpRequest signUpRequest){
         ChefEntity chef = chefMapper.toChefEntity(signUpRequest);
+
+        Optional<ChefEntity> existingChef = chefRepository.findByMobileNo(chef.getMobileNo());
+
+        if(existingChef.isPresent()){
+            throw new BadRequestException("This mobile no. already exists");
+        }
 
         ChefEntity response = chefRepository.save(chef);
 

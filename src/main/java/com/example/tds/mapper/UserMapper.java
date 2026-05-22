@@ -1,9 +1,9 @@
 package com.example.tds.mapper;
 
-import com.example.tds.dto.requests.*;
+import com.example.tds.dto.requests.users.UserLoginRequest;
 import com.example.tds.dto.responses.*;
 import com.example.tds.entity.UserEntity;
-import com.example.tds.dto.requests.UserSignUpRequest;
+import com.example.tds.dto.requests.users.UserSignUpRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

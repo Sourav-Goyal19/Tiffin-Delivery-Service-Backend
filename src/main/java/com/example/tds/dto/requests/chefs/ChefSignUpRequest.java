@@ -1,4 +1,4 @@
-package com.example.tds.dto.requests;
+package com.example.tds.dto.requests.chefs;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

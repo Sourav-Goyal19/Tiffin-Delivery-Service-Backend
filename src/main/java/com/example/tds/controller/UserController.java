@@ -2,8 +2,8 @@ package com.example.tds.controller;
 
 import com.example.tds.dto.requests.RefreshTokenRequest;
 import com.example.tds.dto.requests.UpdateLocationRequest;
-import com.example.tds.dto.requests.UserLoginRequest;
-import com.example.tds.dto.requests.UserSignUpRequest;
+import com.example.tds.dto.requests.users.UserLoginRequest;
+import com.example.tds.dto.requests.users.UserSignUpRequest;
 import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;

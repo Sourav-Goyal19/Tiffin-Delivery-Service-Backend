@@ -1,4 +1,4 @@
-package com.example.tds.dto.requests;
+package com.example.tds.dto.requests.users;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

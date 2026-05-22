@@ -16,12 +16,10 @@ import java.util.UUID;
 @Component
 public class JwtUtility {
     private static final Logger log = LoggerFactory.getLogger(JwtUtility.class);
-    private final JwtConfig jwtConfig;
     private final SecretKey secretKey;
 
     public JwtUtility(JwtConfig jwtConfig){
-       this.jwtConfig = jwtConfig;
-       this.secretKey = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
+        this.secretKey = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
     }
 
     public String generateToken(String subject, Map<String, Object> claims, long expiry){
