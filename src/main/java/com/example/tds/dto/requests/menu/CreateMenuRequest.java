@@ -1,7 +1,6 @@
 package com.example.tds.dto.requests.menu;
 
 import com.example.tds.enums.WeekDay;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
