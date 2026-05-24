@@ -1,8 +1,9 @@
 package com.example.tds.service;
 
 import com.example.tds.dto.requests.UpdateLocationRequest;
-import com.example.tds.dto.requests.users.UserLoginRequest;
-import com.example.tds.dto.requests.users.UserSignUpRequest;
+import com.example.tds.dto.requests.OtpGenerationRequest;
+import com.example.tds.dto.requests.OtpVerifyRequest;
+import com.example.tds.dto.requests.users.UserNameUpdateRequest;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
 import com.example.tds.exception.BadRequestException;
@@ -14,11 +15,12 @@ import com.example.tds.utilities.JwtUtility;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -26,56 +28,72 @@ import java.util.UUID;
 public class UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtUtility jwt;
 
     long refreshTokenExpiry = 7 * 24 * 60 * 60 * 1000L;
     long accessTokenExpiry = 3 * 60 * 60 * 1000L;
 
-    public UserResponse handleSignUp(UserSignUpRequest signUpDto){
-        UserEntity user = userMapper.toUserEntity(signUpDto);
+    public UserResponse handleUpdateName(UUID userId, UserNameUpdateRequest userNameUpdateRequest) {
+        String name = userNameUpdateRequest.getName();
 
-        String email = user.getEmail();
-        UserEntity existingUser = userRepository.findByEmail(email);
+        UserEntity existingUser = userRepository.findById(userId)
+                .orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
-        if(existingUser != null){
-            throw new BadRequestException("This email already exists.");
-        }
+        log.info("handleUpdateName: userNameUpdateRequest={}", name);
 
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashedPassword);
+        existingUser.setName(name);
 
-        UserEntity response = userRepository.save(user);
+        userRepository.save(existingUser);
 
-        return userMapper.toUserResponse(response);
+        return userMapper.toUserResponse(existingUser);
     }
 
-    public UserResponse handleLogin(UserLoginRequest loginDto){
-        UserEntity user = userMapper.toUserEntity(loginDto);
+    public void handleOtpGeneration(OtpGenerationRequest generationRequest){
+        String mobileNo = generationRequest.getMobileNo();
 
-        UserEntity existingUser = userRepository.findByEmail(user.getEmail());
+        UserEntity existingUser = userRepository.findByMobileNo(mobileNo)
+                .orElse(null);
 
-        if (existingUser == null){
-            throw new BadRequestException("No existing user found");
+        if(existingUser == null){
+            UserEntity newUser = new UserEntity();
+            newUser.setMobileNo(mobileNo);
+
+            existingUser = userRepository.save(newUser);
         }
 
-        boolean matched = passwordEncoder.matches(user.getPassword(), existingUser.getPassword());
+        int otp = ThreadLocalRandom.current().nextInt(1000, 10000);
+        existingUser.setOtp(otp);
 
-        if(!matched){
-            throw new BadRequestException("Incorrect password");
+        userRepository.save(existingUser);
+
+        // TODO: Send OTP through email or sms
+    }
+
+    public UserResponse handleOtpVerification(OtpVerifyRequest otpVerifyRequest){
+        String mobileNo = otpVerifyRequest.getMobileNo();
+        Integer otp = otpVerifyRequest.getOtp();
+
+        UserEntity user = userRepository.findByMobileNo(mobileNo)
+                .orElseThrow(()->new ResourceNotFoundException("User not found"));
+
+        if(user.getOtp() == null || !user.getOtp().equals(otp)){
+            throw new BadRequestException("Invalid OTP");
         }
 
-        Map<String, Object> claims = Map.of(
-                "id", existingUser.getId(),
-                "name", existingUser.getName(),
-                "email", existingUser.getEmail()
-        );
+        user.setOtp(null);
+        user.setIsVerified(true);
 
+        userRepository.save(user);
 
-        String refreshToken = jwt.generateToken(existingUser.getId(), claims, refreshTokenExpiry);
-        String accessToken = jwt.generateToken(existingUser.getId(), claims, accessTokenExpiry);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", user.getId());
+        claims.put("name", user.getName());
+        claims.put("mobileNo", user.getMobileNo());
 
-       UserResponse response = userMapper.toUserResponse(existingUser);
+        String refreshToken = jwt.generateToken(user.getId(), claims, refreshTokenExpiry);
+        String accessToken = jwt.generateToken(user.getId(), claims, accessTokenExpiry);
+
+       UserResponse response = userMapper.toUserResponse(user);
        response.setAccessToken(accessToken);
        response.setRefreshToken(refreshToken);
 
@@ -119,7 +137,8 @@ public class UserService {
                 locationRequest.getLatitude()
         );
 
-        UserEntity updatedUser = userRepository.findByEmail(existingUser.getEmail());
+        UserEntity updatedUser = userRepository.findByMobileNo(existingUser.getMobileNo())
+                .orElseThrow(()->new ResourceNotFoundException("User not found"));
 
         return userMapper.toUserResponse(updatedUser);
     }

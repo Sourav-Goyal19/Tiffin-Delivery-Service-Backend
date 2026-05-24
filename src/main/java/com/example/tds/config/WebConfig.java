@@ -5,6 +5,7 @@ import com.example.tds.interceptors.UserAuthInterceptor;
 import com.example.tds.interceptors.LogInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -25,7 +26,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/users/**")
                 .excludePathPatterns(
                         List.of(
-                                "/api/users/login",
+                                "/api/users/otp/generate",
+                                "/api/users/otp/verify",
                                 "/api/users/signup",
                                 "/api/users/refresh"
                         )
@@ -44,5 +46,14 @@ public class WebConfig implements WebMvcConfigurer {
                                 "/api/chefs/refresh"
                         )
                 );
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry){
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("*")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }

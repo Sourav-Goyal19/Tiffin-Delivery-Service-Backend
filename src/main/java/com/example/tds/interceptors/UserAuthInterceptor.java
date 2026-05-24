@@ -33,7 +33,7 @@ public class UserAuthInterceptor implements HandlerInterceptor {
         if (accessToken == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{" +
-                    "\"error\": \"Missing access token\",\n" +
+                    "\"message\": \"Missing access token\",\n" +
                     "\"success\": \"false\"" +
                 "}");
             return false;
@@ -49,10 +49,9 @@ public class UserAuthInterceptor implements HandlerInterceptor {
         }
 
         Claims claims = jwtUtil.extractAllClaims(accessToken);
-        String email = claims.get("email", String.class);
+        String mobileNo = claims.get("mobileNo", String.class);
 
-        UserEntity userEntity = userRepository.findByEmail(email);
-
+        UserEntity userEntity = userRepository.findByMobileNo(mobileNo).orElse(null);
         if (userEntity == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write("{" +

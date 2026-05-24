@@ -1,7 +1,9 @@
 package com.example.tds.exception;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import org.springframework.http.HttpStatus;
 import com.example.tds.dto.responses.ErrorResponse;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -61,6 +63,27 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .message("Validation failed")
                 .errors(validationErrors)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleJsonParseError(HttpMessageNotReadableException ex){
+        Map<Object, Object> errors = new HashMap<>();
+
+        Throwable cause = ex.getCause();
+
+        if(cause instanceof UnrecognizedPropertyException unrecognizedPropertyException){
+            String fieldName = unrecognizedPropertyException.getPropertyName();
+
+            errors.put(fieldName, "Unknown field");
+        }
+
+        return ErrorResponse.builder()
+                .message("Invalid request body")
+                .success(false)
+                .errors(errors)
                 .timestamp(LocalDateTime.now())
                 .build();
     }

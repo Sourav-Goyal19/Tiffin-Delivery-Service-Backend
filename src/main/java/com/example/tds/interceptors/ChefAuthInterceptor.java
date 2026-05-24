@@ -35,7 +35,7 @@ public class ChefAuthInterceptor implements HandlerInterceptor {
         if (accessToken == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{" +
-                    "\"error\": \"Missing access token\",\n" +
+                    "\"message\": \"Missing access token\",\n" +
                     "\"success\": \"false\"" +
                     "}");
             return false;

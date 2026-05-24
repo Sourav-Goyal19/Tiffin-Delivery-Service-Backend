@@ -2,7 +2,9 @@ package com.example.tds.controller;
 
 import com.example.tds.dto.requests.RefreshTokenRequest;
 import com.example.tds.dto.requests.UpdateLocationRequest;
-import com.example.tds.dto.requests.users.UserLoginRequest;
+import com.example.tds.dto.requests.OtpGenerationRequest;
+import com.example.tds.dto.requests.OtpVerifyRequest;
+import com.example.tds.dto.requests.users.UserNameUpdateRequest;
 import com.example.tds.dto.requests.users.UserSignUpRequest;
 import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.dto.responses.UserResponse;
@@ -27,30 +29,41 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse> handleSignUp(@RequestBody @Valid UserSignUpRequest signUpDto){
-        UserResponse response = userService.handleSignUp(signUpDto);
+    @PatchMapping("/{userId}/name")
+    public ResponseEntity<ApiResponse> updateUserName(@PathVariable("userId") UUID userId, @RequestBody @Valid UserNameUpdateRequest nameUpdateRequest){
+        UserResponse response = userService.handleUpdateName(userId, nameUpdateRequest);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("name update successfully")
+                        .success(true)
+                        .data(Map.of("user", response))
+                        .build()
+        );
+    }
+
+    @PostMapping("/otp/verify")
+    public ResponseEntity<ApiResponse> handleOtpVerification(@RequestBody @Valid OtpVerifyRequest verifyRequest){
+        UserResponse response= userService.handleOtpVerification(verifyRequest);
+
         Map<String, Object> data = Map.of("user", response);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                ApiResponse.builder()
-                        .message("SignUp Successful")
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.builder()
+                        .message("OTP verified successfully")
                         .data(data)
                         .success(true)
                         .build()
         );
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse> handleLogin(@RequestBody @Valid UserLoginRequest loginDto){
-        UserResponse response= userService.handleLogin(loginDto);
+    @PostMapping("/otp/generate")
+    public ResponseEntity<ApiResponse> handleOtpGeneration(@RequestBody @Valid OtpGenerationRequest generationRequest){
+        userService.handleOtpGeneration(generationRequest);
 
-        Map<String, Object> data = Map.of("user", response);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.builder()
-                        .message("Login Successful")
-                        .data(data)
+                        .message("OTP generated successfully")
                         .success(true)
                         .build()
         );

@@ -21,14 +21,17 @@ public class UserEntity {
     @Column(name = "user_id")
     private UUID id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = true)
     private String name;
 
-    @Column(name = "email", nullable = false, unique = true)
-    private String email;
+    @Column(name = "mobile_no", length = 10, unique = true, nullable = false)
+    private String mobileNo;
 
-    @Column(name = "password", nullable = false)
-    private String password;
+    @Column(name = "otp", length = 6)
+    private Integer otp;
+
+    @Column(name = "is_verified")
+    private Boolean isVerified = false;
 
     @Column(name = "location", columnDefinition = "geography(Point, 4326)")
     private Point location;
