@@ -1,11 +1,6 @@
 package com.example.tds.controller;
 
-import com.example.tds.dto.requests.RefreshTokenRequest;
-import com.example.tds.dto.requests.UpdateLocationRequest;
-import com.example.tds.dto.requests.OtpGenerationRequest;
-import com.example.tds.dto.requests.OtpVerifyRequest;
-import com.example.tds.dto.requests.users.UserNameUpdateRequest;
-import com.example.tds.dto.requests.users.UserSignUpRequest;
+import com.example.tds.dto.requests.*;
 import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
@@ -30,7 +25,7 @@ public class UserController {
     }
 
     @PatchMapping("/{userId}/name")
-    public ResponseEntity<ApiResponse> updateUserName(@PathVariable("userId") UUID userId, @RequestBody @Valid UserNameUpdateRequest nameUpdateRequest){
+    public ResponseEntity<ApiResponse> updateUserName(@PathVariable("userId") UUID userId, @RequestBody @Valid UpdateNameRequest nameUpdateRequest){
         UserResponse response = userService.handleUpdateName(userId, nameUpdateRequest);
 
         return ResponseEntity.status(HttpStatus.OK).body(

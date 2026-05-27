@@ -23,16 +23,15 @@ import java.util.UUID;
 public class ChefController {
     private final ChefService chefService;
 
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse> handleSignUp(@RequestBody @Valid ChefSignUpRequest signUpDto){
-        ChefResponse response = chefService.handleSignUp(signUpDto);
-        Map<String, Object> data = Map.of("chef", response);
+    @PatchMapping("/{chefId}/name")
+    public ResponseEntity<ApiResponse> updateChefName(@PathVariable("chefId") UUID chefId, @RequestBody @Valid UpdateNameRequest updateNameRequest) {
+        ChefResponse chefResponse = chefService.handleUpdateName(chefId, updateNameRequest);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
-                        .message("SignUp Successful")
-                        .data(data)
+                        .message("name updated successfully")
                         .success(true)
+                        .data(Map.of("chef", chefResponse))
                         .build()
         );
     }

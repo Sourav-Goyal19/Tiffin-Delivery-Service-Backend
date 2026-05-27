@@ -1,4 +1,4 @@
-package com.example.tds.dto.requests.users;
+package com.example.tds.dto.requests;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserNameUpdateRequest {
+public class UpdateNameRequest {
     @NotBlank(message = "name is required")
     private String name;
 }

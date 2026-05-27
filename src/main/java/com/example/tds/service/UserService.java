@@ -3,7 +3,7 @@ package com.example.tds.service;
 import com.example.tds.dto.requests.UpdateLocationRequest;
 import com.example.tds.dto.requests.OtpGenerationRequest;
 import com.example.tds.dto.requests.OtpVerifyRequest;
-import com.example.tds.dto.requests.users.UserNameUpdateRequest;
+import com.example.tds.dto.requests.UpdateNameRequest;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
 import com.example.tds.exception.BadRequestException;
@@ -33,13 +33,11 @@ public class UserService {
     long refreshTokenExpiry = 7 * 24 * 60 * 60 * 1000L;
     long accessTokenExpiry = 3 * 60 * 60 * 1000L;
 
-    public UserResponse handleUpdateName(UUID userId, UserNameUpdateRequest userNameUpdateRequest) {
+    public UserResponse handleUpdateName(UUID userId, UpdateNameRequest userNameUpdateRequest) {
         String name = userNameUpdateRequest.getName();
 
         UserEntity existingUser = userRepository.findById(userId)
                 .orElseThrow(()-> new ResourceNotFoundException("User not found"));
-
-        log.info("handleUpdateName: userNameUpdateRequest={}", name);
 
         existingUser.setName(name);
 

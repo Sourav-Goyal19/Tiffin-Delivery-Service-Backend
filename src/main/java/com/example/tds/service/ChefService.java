@@ -1,5 +1,6 @@
 package com.example.tds.service;
 
+import com.example.tds.dto.requests.UpdateNameRequest;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -33,24 +34,30 @@ public class ChefService {
     long refreshTokenExpiry = 7 * 24 * 60 * 60 * 1000L;
     long accessTokenExpiry = 3 * 60 * 60 * 1000L;
 
-    public ChefResponse handleSignUp(ChefSignUpRequest signUpRequest){
-        ChefEntity chef = chefMapper.toChefEntity(signUpRequest);
+    public ChefResponse handleUpdateName(UUID chefId, UpdateNameRequest updateNameRequest) {
+        String name = updateNameRequest.getName();
 
-        Optional<ChefEntity> existingChef = chefRepository.findByMobileNo(chef.getMobileNo());
+        ChefEntity existingChef = chefRepository.findById(chefId)
+                .orElseThrow(()-> new ResourceNotFoundException("Chef not found"));
 
-        if(existingChef.isPresent()){
-            throw new BadRequestException("This mobile no. already exists");
-        }
+        existingChef.setName(name);
 
-        ChefEntity response = chefRepository.save(chef);
+        chefRepository.save(existingChef);
 
-        return chefMapper.toChefResponse(response);
+        return chefMapper.toChefResponse(existingChef);
     }
 
     public void handleOtpGeneration(OtpGenerationRequest generationRequest){
         String mobileNo = generationRequest.getMobileNo();
         ChefEntity existingChef = chefRepository.findByMobileNo(mobileNo)
-                .orElseThrow(()->new ResourceNotFoundException("Chef not found"));
+                .orElse(null);
+
+        if(existingChef == null){
+            ChefEntity newChef = new ChefEntity();
+            newChef.setMobileNo(mobileNo);
+
+            existingChef = chefRepository.save(newChef);
+        }
 
         int otp = ThreadLocalRandom.current().nextInt(1000, 10000);
         existingChef.setOtp(otp);
@@ -78,7 +85,6 @@ public class ChefService {
 
         Map<String, Object> claims = Map.of(
                 "chefId", chef.getChefId(),
-                "name", chef.getName(),
                 "mobileNo", chef.getMobileNo()
         );
 
