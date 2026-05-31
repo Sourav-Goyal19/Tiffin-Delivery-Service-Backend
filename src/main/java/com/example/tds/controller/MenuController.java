@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,8 @@ public class MenuController {
     private final ChefMapper chefMapper;
 
     @PostMapping()
-    public ResponseEntity<ApiResponse> menuCreator(@RequestAttribute("chef") ChefEntity chef, @RequestBody @Valid CreateMenuRequest createMenuRequest) {
-        MenuResponse menuResponse = menuService.handleMenuCreation(chef, createMenuRequest);
+    public ResponseEntity<ApiResponse> menuCreator(@RequestAttribute("chef") ChefEntity chef, @RequestPart("menu") @Valid CreateMenuRequest createMenuRequest, @RequestPart(value = "thumbnail", required = false ) MultipartFile thumbnail) {
+        MenuResponse menuResponse = menuService.handleMenuCreation(chef, createMenuRequest, thumbnail);
 
         ChefResponse chefResponse = chefMapper.toChefResponse(chef);
 
@@ -86,8 +87,8 @@ public class MenuController {
     }
 
     @PatchMapping("/{menuId}")
-    public ResponseEntity<ApiResponse> updateMenu(@RequestAttribute("chef") ChefEntity chef, @PathVariable("menuId") UUID menuId, @RequestBody @Valid UpdateMenuRequest updateMenuRequest) {
-        MenuResponse menuResponse = menuService.handleUpdateMenu(menuId, updateMenuRequest);
+    public ResponseEntity<ApiResponse> updateMenu(@RequestAttribute("chef") ChefEntity chef, @PathVariable("menuId") UUID menuId, @RequestPart("menu") @Valid UpdateMenuRequest updateMenuRequest, @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
+        MenuResponse menuResponse = menuService.handleUpdateMenu(menuId, updateMenuRequest, thumbnail);
 
         ChefResponse chefResponse = chefMapper.toChefResponse(chef);
 
