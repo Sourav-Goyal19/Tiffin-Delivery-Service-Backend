@@ -2,13 +2,13 @@ package com.example.tds.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
-import org.hibernate.type.SqlTypes;
 import com.example.tds.enums.WeekDay;
-import org.hibernate.annotations.JdbcTypeCode;
+import com.example.tds.enums.MealType;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
 
@@ -22,16 +22,26 @@ public class MenuEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID menuId;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "items", columnDefinition = "jsonb")
-    private Map<String, Object> items;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "meal_type", nullable = false)
+    private MealType mealType;
+
+    @Column(name = "items", nullable = false)
+    private List<String> items;
+
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
+
+    @Column(name = "is_active", nullable = false)
+    @ColumnDefault("false")
+    private Boolean isActive;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "week_day")
+    @Column(name = "week_day", nullable = false)
     private WeekDay weekDay;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chef_id", referencedColumnName = "chef_id")
+    @JoinColumn(name = "chef_id", referencedColumnName = "chef_id", nullable = false)
     private ChefEntity chef;
 
     @CreationTimestamp
