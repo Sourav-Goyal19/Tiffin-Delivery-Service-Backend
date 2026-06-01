@@ -73,7 +73,7 @@ public class MenuService {
                         )
                         .orElse(null);
 
-                isActiveMap.put(String.join(mealType.name(),  weekDay.name()), existingMealMenu != null);
+                isActiveMap.put(String.join("-", mealType.name(),  weekDay.name()), existingMealMenu != null);
             }
         }
 
@@ -84,7 +84,7 @@ public class MenuService {
             MealType currentMealType = k.getMealType();
             WeekDay currentWeekDay = k.getWeekDay();
 
-            String key = String.join(currentMealType.name(), currentWeekDay.name());
+            String key = String.join("-", currentMealType.name(), currentWeekDay.name());
             Boolean isActive = isActiveMap.get(key);
 
             k.setIsActive(!isActive);

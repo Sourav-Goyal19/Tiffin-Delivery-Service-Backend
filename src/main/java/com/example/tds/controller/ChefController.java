@@ -1,10 +1,9 @@
 package com.example.tds.controller;
 
-import com.example.tds.dto.requests.chefs.ChefSignUpRequest;
+import com.example.tds.dto.requests.common.*;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
-import com.example.tds.dto.requests.*;
 import com.example.tds.entity.ChefEntity;
 import com.example.tds.service.ChefService;
 import org.springframework.http.HttpStatus;

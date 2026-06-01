@@ -1,6 +1,6 @@
 package com.example.tds.service;
 
-import com.example.tds.dto.requests.UpdateNameRequest;
+import com.example.tds.dto.requests.common.UpdateNameRequest;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -10,16 +10,14 @@ import com.example.tds.utilities.JwtUtility;
 import org.springframework.stereotype.Service;
 import com.example.tds.repository.ChefRepository;
 import com.example.tds.dto.responses.ChefResponse;
-import com.example.tds.dto.requests.OtpVerifyRequest;
+import com.example.tds.dto.requests.common.OtpVerifyRequest;
 import com.example.tds.exception.BadRequestException;
-import com.example.tds.dto.requests.chefs.ChefSignUpRequest;
 import com.example.tds.exception.UnauthorizedException;
-import com.example.tds.dto.requests.OtpGenerationRequest;
-import com.example.tds.dto.requests.UpdateLocationRequest;
+import com.example.tds.dto.requests.common.OtpGenerationRequest;
+import com.example.tds.dto.requests.common.UpdateLocationRequest;
 import com.example.tds.exception.ResourceNotFoundException;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 

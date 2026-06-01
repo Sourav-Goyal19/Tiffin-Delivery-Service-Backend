@@ -1,6 +1,6 @@
 package com.example.tds.controller;
 
-import com.example.tds.dto.requests.*;
+import com.example.tds.dto.requests.common.*;
 import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
