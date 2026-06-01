@@ -1,4 +1,4 @@
-package com.example.tds.dto.requests;
+package com.example.tds.dto.requests.common;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

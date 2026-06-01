@@ -1,9 +1,9 @@
 package com.example.tds.service;
 
-import com.example.tds.dto.requests.UpdateLocationRequest;
-import com.example.tds.dto.requests.OtpGenerationRequest;
-import com.example.tds.dto.requests.OtpVerifyRequest;
-import com.example.tds.dto.requests.UpdateNameRequest;
+import com.example.tds.dto.requests.common.UpdateLocationRequest;
+import com.example.tds.dto.requests.common.OtpGenerationRequest;
+import com.example.tds.dto.requests.common.OtpVerifyRequest;
+import com.example.tds.dto.requests.common.UpdateNameRequest;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
 import com.example.tds.exception.BadRequestException;
