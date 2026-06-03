@@ -32,9 +32,6 @@ public class ChefEntity {
     @Column(name = "is_verified")
     private Boolean isVerified = false;
 
-    @Column(name = "day_price")
-    private Double dayPrice;
-
     @Column(name = "address")
     private String address;
 
