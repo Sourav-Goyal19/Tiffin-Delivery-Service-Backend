@@ -35,12 +35,6 @@ public class ChefEntity {
     @Column(name = "day_price")
     private Double dayPrice;
 
-    @Column(name = "weekly_price")
-    private Double weeklyPrice;
-
-    @Column(name = "monthly_price")
-    private Double monthlyPrice;
-
     @Column(name = "address")
     private String address;
 
