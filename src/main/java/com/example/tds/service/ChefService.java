@@ -16,6 +16,7 @@ import com.example.tds.exception.UnauthorizedException;
 import com.example.tds.dto.requests.common.OtpGenerationRequest;
 import com.example.tds.dto.requests.common.UpdateLocationRequest;
 import com.example.tds.exception.ResourceNotFoundException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class ChefService {
     private final JwtUtility jwt;
     private final ChefMapper chefMapper;
     private final ChefRepository chefRepository;
+    private final StorageService storageService;
 
     long refreshTokenExpiry = 7 * 24 * 60 * 60 * 1000L;
     long accessTokenExpiry = 3 * 60 * 60 * 1000L;
@@ -114,12 +116,24 @@ public class ChefService {
         String newRefreshToken = jwt.generateToken(claims.getSubject(), claims, refreshTokenExpiry);
         String newAccessToken = jwt.generateToken(claims.getSubject(), claims, accessTokenExpiry);
 
-        ChefResponse response = new ChefResponse();
+        return ChefResponse
+                .builder()
+                .refreshToken(newRefreshToken)
+                .accessToken(newAccessToken)
+                .build();
+    }
 
-        response.setRefreshToken(newRefreshToken);
-        response.setAccessToken(newAccessToken);
+    public ChefResponse handleUploadAvatar(UUID chefId, MultipartFile avatar){
+        ChefEntity chef = chefRepository.findById(chefId)
+                .orElseThrow(()-> new ResourceNotFoundException("Chef not found"));
 
-        return response;
+        storageService.uploadFile("chefs-avatar", avatar.getOriginalFilename(), avatar, true);
+
+        String avatarUrl = storageService.getPublicUrl("chefs-avatar", avatar.getOriginalFilename());
+        chef.setAvatarUrl(avatarUrl);
+        chefRepository.save(chef);
+
+        return chefMapper.toChefResponse(chef);
     }
 
     public ChefResponse handleUpdateLocation(UUID chefId, UpdateLocationRequest locationRequest){

@@ -49,11 +49,7 @@ public class MealPlanService {
 
     public List<MealPlanResponse> handleGetAllMealPlans(UUID chefId) {
         List<MealPlanEntity> mealPlans = mealPlanRepository.findAllByChefChefId(chefId)
-                .orElseThrow(() -> new ResourceNotFoundException("No meal plans found"));
-
-        if (mealPlans.isEmpty()) {
-            throw new ResourceNotFoundException("No meal plans found");
-        }
+                .orElse(List.of());
 
         return mealPlanMapper.toMealPlanResponse(mealPlans);
     }
@@ -75,7 +71,7 @@ public class MealPlanService {
     public void handleDeleteMealPlan(UUID chefId, UUID mealPlanId) {
         MealPlanEntity existingMealPlan = findMealPlanByChefIdAndMealPlanId(chefId, mealPlanId);
 
-        // TODO: delete only when there is/are no active subscription(s)
+        // :-: TODO: delete only when there is/are no active subscription(s) :-:
 
         mealPlanRepository.delete(existingMealPlan);
     }

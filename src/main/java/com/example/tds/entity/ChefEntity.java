@@ -35,6 +35,9 @@ public class ChefEntity {
     @Column(name = "address")
     private String address;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @Column(name = "location", columnDefinition = "geography(Point, 4326)")
     private Point location;
 

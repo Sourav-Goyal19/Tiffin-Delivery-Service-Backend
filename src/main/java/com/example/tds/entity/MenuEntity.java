@@ -36,6 +36,9 @@ public class MenuEntity {
     @ColumnDefault("false")
     private Boolean isActive;
 
+    @Column(name = "capacity")
+    private Integer capacity;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "week_day", nullable = false)
     private WeekDay weekDay;
