@@ -1,5 +1,6 @@
 package com.example.tds.service;
 
+import com.example.tds.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import com.example.tds.enums.WeekDay;
 import com.example.tds.enums.MealType;
@@ -105,7 +106,7 @@ public class MenuService {
 
     public List<MenuResponse> handleGetAllMenus(UUID chefId){
         List<MenuEntity> menus = menuRepository.findAllByChefChefId(chefId)
-                .orElseThrow(()->new ResourceNotFoundException("No menus found"));
+                .orElse(new ArrayList<>());
 
         return menuMapper.toMenuResponse(menus);
     }

@@ -1,6 +1,7 @@
 package com.example.tds.service;
 
 import io.minio.*;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,35 @@ public class StorageService {
         }
     }
 
+    public void deleteBucket(String bucketName) {
+        try {
+            Iterable<Result<Item>> objects =
+                    minioClient.listObjects(
+                            ListObjectsArgs.builder()
+                                    .bucket(bucketName)
+                                    .recursive(true)
+                                    .build());
+
+            for (Result<Item> result : objects) {
+                Item item = result.get();
+
+                minioClient.removeObject(
+                        RemoveObjectArgs.builder()
+                                .bucket(bucketName)
+                                .object(item.objectName())
+                                .build());
+            }
+
+            minioClient.removeBucket(
+                    RemoveBucketArgs.builder()
+                            .bucket(bucketName)
+                            .build());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete bucket", e);
+        }
+    }
+
     public void uploadFile(String bucketName, String filename, MultipartFile file, Boolean isPublic) {
         try {
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
@@ -59,7 +89,7 @@ public class StorageService {
         }
     }
 
-    public String getPublicUrl(String bucketName, String objectName) {
+    public String getPublicUrl(String bucketName, String filename) {
         try {
             String policy = minioClient.getBucketPolicy(
                     GetBucketPolicyArgs.builder()
@@ -71,14 +101,14 @@ public class StorageService {
                     && policy.contains("\"Principal\":{\"AWS\":[\"*\"]}");
 
             if(isPublic){
-                return minioUrl + "/" + bucketName + "/" + objectName;
+                return minioUrl + "/" + bucketName + "/" + filename;
             }
 
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Http.Method.GET)
                             .bucket(bucketName)
-                            .object(objectName)
+                            .object(filename)
                             .expiry(24 * 60 * 60)
                             .build()
             );

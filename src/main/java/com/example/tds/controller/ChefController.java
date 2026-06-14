@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.dto.responses.ChefResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +30,19 @@ public class ChefController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
                         .message("name updated successfully")
+                        .success(true)
+                        .data(Map.of("chef", chefResponse))
+                        .build()
+        );
+    }
+
+    @PatchMapping("/{chefId}/upload-avatar")
+    public ResponseEntity<ApiResponse> uploadAvatar(@PathVariable("chefId") UUID chefId, @RequestPart(value = "avatar", required = false) MultipartFile avatar) {
+        ChefResponse chefResponse = chefService.handleUploadAvatar(chefId, avatar);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("avatar uploaded successfully")
                         .success(true)
                         .data(Map.of("chef", chefResponse))
                         .build()
