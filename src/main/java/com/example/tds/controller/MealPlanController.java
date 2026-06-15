@@ -1,5 +1,6 @@
 package com.example.tds.controller;
 
+import com.example.tds.exception.BadRequestException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,10 @@ public class MealPlanController {
 
     @PostMapping()
     public ResponseEntity<ApiResponse> createMealPlan(@RequestAttribute("chef") ChefEntity chefEntity, @Valid @RequestBody CreateMealPlanRequest createMealPlanRequest){
+        if(createMealPlanRequest.getWeeklyPrice() == null && createMealPlanRequest.getMonthlyPrice() == null){
+            throw new BadRequestException("Either weekly or monthly price is required");
+        }
+
         MealPlanResponse response = mealPlanService.handleCreateMealPlan(chefEntity, createMealPlanRequest);
 
         ChefResponse chefResponse = chefMapper.toChefResponse(chefEntity);
@@ -71,6 +76,10 @@ public class MealPlanController {
 
     @PatchMapping("/{mealPlanId}")
     public ResponseEntity<ApiResponse> updateMealPlan(@RequestAttribute("chef") ChefEntity chef, @PathVariable("mealPlanId") UUID mealPlanId, @Valid @RequestBody UpdateMealPlanRequest updateMealPlanRequest){
+        if(updateMealPlanRequest.getWeeklyPrice() == null && updateMealPlanRequest.getMonthlyPrice() == null){
+            throw new BadRequestException("Either weekly or monthly price is required");
+        }
+
         MealPlanResponse response = mealPlanService.handleUpdateMealPlan(chef.getChefId(), mealPlanId, updateMealPlanRequest);
 
         ChefResponse chefResponse = chefMapper.toChefResponse(chef);
