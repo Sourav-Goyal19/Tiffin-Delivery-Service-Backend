@@ -29,10 +29,10 @@ public class MealPlanEntity {
     @Column(name = "meal_type", nullable = false)
     private MealType mealType;
 
-    @Column(name = "weekly_price", nullable = false)
+    @Column(name = "weekly_price")
     private Double weeklyPrice;
 
-    @Column(name = "monthly_price", nullable = false)
+    @Column(name = "monthly_price")
     private Double monthlyPrice;
 
     @Column(name = "timing", nullable = false)
@@ -49,4 +49,19 @@ public class MealPlanEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @PrePersist
+    @PreUpdate
+    public void validatePrices() {
+        if (weeklyPrice == null && monthlyPrice == null) {
+            throw new IllegalStateException("Either weekly_price or monthly_price is null");
+        }
+
+        if(weeklyPrice != null && weeklyPrice <= 0){
+            throw new IllegalArgumentException("Weekly price can't be less than or equal to 0");
+        }
+
+        if(monthlyPrice != null && monthlyPrice <= 0){
+            throw new IllegalArgumentException("Monthly price can't be less than or equal to 0");
+        }
+    }
 }

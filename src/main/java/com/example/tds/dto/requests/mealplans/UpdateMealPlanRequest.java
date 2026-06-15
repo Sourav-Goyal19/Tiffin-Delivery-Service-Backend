@@ -9,10 +9,8 @@ import java.time.LocalTime;
 @Getter
 @Setter
 public class UpdateMealPlanRequest {
-    @NotNull(message = "weekly price is required")
     private Double weeklyPrice;
 
-    @NotNull(message = "monthly price is required")
     private Double monthlyPrice;
 
     @NotNull(message = "timing is required")

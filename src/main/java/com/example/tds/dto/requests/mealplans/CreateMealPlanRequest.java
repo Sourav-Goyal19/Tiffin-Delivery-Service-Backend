@@ -4,6 +4,7 @@ import com.example.tds.enums.MealType;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalTime;
 
@@ -13,10 +14,8 @@ public class CreateMealPlanRequest {
     @NotNull(message = "A proper meal type is required")
     private MealType mealType;
 
-    @NotNull(message = "weekly price is required")
     private Double weeklyPrice;
 
-    @NotNull(message = "monthly price is required")
     private Double monthlyPrice;
 
     @NotNull(message = "timing is required")

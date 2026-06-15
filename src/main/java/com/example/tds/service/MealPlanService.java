@@ -23,6 +23,18 @@ public class MealPlanService {
     private final MealPlanMapper mealPlanMapper;
 
     public MealPlanResponse handleCreateMealPlan(ChefEntity chef, CreateMealPlanRequest mealPlanRequest) {
+        Double weeklyPrice = mealPlanRequest.getWeeklyPrice();
+        Double monthlyPrice = mealPlanRequest.getMonthlyPrice();
+
+
+        if(weeklyPrice != null && weeklyPrice <= 0){
+            throw new BadRequestException("Weekly price must be greater than 0");
+        }
+
+        if(monthlyPrice != null && monthlyPrice <= 0){
+            throw new BadRequestException("Monthly price must be greater than 0");
+        }
+
         MealPlanEntity mealPlan = mealPlanMapper.toMealPlanEntity(mealPlanRequest);
 
         MealPlanEntity existingMealPlan = mealPlanRepository.findByChefChefIdAndMealType(
@@ -55,6 +67,17 @@ public class MealPlanService {
     }
 
     public MealPlanResponse handleUpdateMealPlan(UUID chefId, UUID mealPlanId, UpdateMealPlanRequest mealPlanRequest) {
+        Double weeklyPrice = mealPlanRequest.getWeeklyPrice();
+        Double monthlyPrice = mealPlanRequest.getMonthlyPrice();
+
+        if(weeklyPrice != null && weeklyPrice <= 0){
+            throw new BadRequestException("Weekly price must be greater than 0");
+        }
+
+        if(monthlyPrice != null && monthlyPrice <= 0){
+            throw new BadRequestException("Monthly price must be greater than 0");
+        }
+
         MealPlanEntity existingMealPlan = findMealPlanByChefIdAndMealPlanId(chefId, mealPlanId);
         MealPlanEntity updatedMealPlan = mealPlanMapper.toMealPlanEntity(mealPlanRequest);
 
