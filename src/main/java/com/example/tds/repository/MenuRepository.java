@@ -59,7 +59,7 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
         WHERE ST_DWithin(
             c.location,
             u.location,
-            8000
+            5000
         ) AND m.is_active = true
         ORDER BY "disInKm",
             CASE
