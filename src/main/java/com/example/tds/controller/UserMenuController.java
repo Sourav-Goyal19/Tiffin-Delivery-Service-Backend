@@ -24,7 +24,6 @@ public class UserMenuController {
     public ResponseEntity<ApiResponse> getMenuForUsers(@PathVariable("userId") UUID userId) {
         List<MenuWithDistanceResponse> menus = userMenuService.handleGetMenusForCustomers(userId);
 
-
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
                         .message("Menus found successfully")
