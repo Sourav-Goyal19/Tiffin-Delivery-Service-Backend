@@ -62,6 +62,13 @@ public class SubscriptionService {
 
         SubscriptionEntity subscription = subscriptionMapper.toSubscriptionEntity(createSubscriptionRequest);
 
+        SubscriptionEntity existingSubscription = subscriptionRepository.findByUserIdAndMealPlanMealPlanIdAndIsActive(userId, mealPlanId, true)
+                        .orElse(null);
+
+        if (existingSubscription != null) {
+            throw new BadRequestException("Subscription already exists");
+        }
+
         subscription.setUser(user);
         subscription.setMealPlan(mealPlan);
 
