@@ -119,4 +119,6 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
     ) AS disInKm
     """, nativeQuery = true)
     DistanceProjection findDisInKm(@Param("userLocation") Point userLocation, @Param("chefLocation") Point chefLocation);
+
+    Optional<SubscriptionEntity> findByUserIdAndMealPlanMealPlanIdAndIsActive(UUID userId, UUID mealPlanId, boolean isActive);
 }
