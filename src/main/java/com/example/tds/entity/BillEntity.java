@@ -24,6 +24,9 @@ public class BillEntity {
     @JoinColumn(name = "subscription_id", referencedColumnName = "subscription_id", nullable = false)
     private SubscriptionEntity subscription;
 
+    @Column(name = "order_id")
+    private String orderId;
+
     @Column(name = "name", nullable = false)
     private String name;
 

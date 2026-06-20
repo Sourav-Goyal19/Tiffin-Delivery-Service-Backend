@@ -23,10 +23,25 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
             s.plan_type        AS "planType",
             s.is_active        AS "isActive",
             s.price            AS "price",
+            s.delivery_fee     AS "deliveryFee",
             s.start_date       AS "startDate",
             s.end_date         AS "endDate",
             s.created_at       AS "subscriptionCreatedAt",
             s.updated_at       AS "subscriptionUpdatedAt",
+
+            b.bill_id          AS "billId",
+            b.order_id         AS "orderId",
+            b.name             AS "billName",
+            b.amount           AS "billAmount",
+            b.status           AS "billStatus",
+            b.created_at       AS "billCreatedAt",
+            b.updated_at       AS "billUpdatedAt",
+
+            p.payment_id       AS "paymentId",
+            p.amount           AS "paymentAmount",
+            p.payment_via      AS "paymentVia",
+            p.created_at       AS "paymentCreatedAt",
+            p.updated_at       AS "paymentUpdatedAt",
             
             u.name             AS "userName",
             u.mobile_no        AS "userMobileNo",
@@ -56,6 +71,10 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
             ON mp.meal_plan_id = s.meal_plan_id
         JOIN chefs c
             ON c.chef_id = mp.chef_id
+        LEFT JOIN bills b
+            ON b.subscription_id = s.subscription_id
+        LEFT JOIN payments p
+            ON p.bill_id = b.bill_id
         WHERE u.user_id = :userId AND s.is_active = true
         ORDER BY "subscriptionCreatedAt"; 
     """)
@@ -75,6 +94,20 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
             s.end_date         AS "endDate",
             s.created_at       AS "subscriptionCreatedAt",
             s.updated_at       AS "subscriptionUpdatedAt",
+
+            b.bill_id          AS "billId",
+            b.order_id         AS "orderId",
+            b.name             AS "billName",
+            b.amount           AS "billAmount",
+            b.status           AS "billStatus",
+            b.created_at       AS "billCreatedAt",
+            b.updated_at       AS "billUpdatedAt",
+
+            p.payment_id       AS "paymentId",
+            p.amount           AS "paymentAmount",
+            p.payment_via      AS "paymentVia",
+            p.created_at       AS "paymentCreatedAt",
+            p.updated_at       AS "paymentUpdatedAt",
             
             u.name             AS "userName",
             u.mobile_no        AS "userMobileNo",
@@ -104,6 +137,10 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
             ON mp.meal_plan_id = s.meal_plan_id
         JOIN chefs c
             ON c.chef_id = mp.chef_id
+        LEFT JOIN bills b
+            ON b.subscription_id = s.subscription_id
+        LEFT JOIN payments p
+            ON p.bill_id = b.bill_id
         WHERE s.subscription_id = :subscriptionId
         ORDER BY "subscriptionCreatedAt"; 
     """)

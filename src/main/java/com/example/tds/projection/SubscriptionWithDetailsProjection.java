@@ -2,6 +2,8 @@ package com.example.tds.projection;
 
 import com.example.tds.enums.DeliveryType;
 import com.example.tds.enums.MealType;
+import com.example.tds.enums.PaymentStatus;
+import com.example.tds.enums.PaymentVia;
 import com.example.tds.enums.PlanType;
 
 import java.time.LocalDate;
@@ -22,6 +24,20 @@ public interface SubscriptionWithDetailsProjection {
     LocalDate getEndDate();
     LocalDateTime getSubscriptionCreatedAt();
     LocalDateTime getSubscriptionUpdatedAt();
+
+    UUID getBillId();
+    String getOrderId();
+    String getBillName();
+    Double getBillAmount();
+    PaymentStatus getBillStatus();
+    LocalDateTime getBillCreatedAt();
+    LocalDateTime getBillUpdatedAt();
+
+    UUID getPaymentId();
+    Double getPaymentAmount();
+    PaymentVia getPaymentVia();
+    LocalDateTime getPaymentCreatedAt();
+    LocalDateTime getPaymentUpdatedAt();
 
     String getUserName();
     String getUserMobileNo();
