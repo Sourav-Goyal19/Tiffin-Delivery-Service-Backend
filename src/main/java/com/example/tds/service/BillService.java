@@ -16,21 +16,35 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BillService {
+
     private final BillRepository billRepository;
     private final BillMapper billMapper;
+    private final RazorpayService razorpayService;
 
     public BillResponse createBill(SubscriptionEntity subscription, String name, double amount) {
-        BillEntity billEntity = new BillEntity();
+        try {
+            BillEntity billEntity = new BillEntity();
 
-        log.info("Subscription: {}", subscription);
+            String orderId = razorpayService.createOrder(
+                    amount,
+                    "INR",
+                    name,
+                    subscription.getSubscriptionId()
+            );
 
-        billEntity.setSubscription(subscription);
-        billEntity.setName(name);
-        billEntity.setAmount(amount);
-        billEntity.setStatus(PaymentStatus.PENDING);
+            billEntity.setSubscription(subscription);
+            billEntity.setName(name);
+            billEntity.setAmount(amount);
+            billEntity.setStatus(PaymentStatus.PENDING);
 
-        billEntity = billRepository.save(billEntity);
+            billEntity.setOrderId(orderId);
 
-        return billMapper.toBillResponse(billEntity);
+            billEntity = billRepository.save(billEntity);
+
+            return billMapper.toBillResponse(billEntity);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create bill", e);
+        }
     }
 }
