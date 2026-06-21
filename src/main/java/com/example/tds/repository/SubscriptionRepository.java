@@ -141,6 +141,72 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
             ON b.subscription_id = s.subscription_id
         LEFT JOIN payments p
             ON p.bill_id = b.bill_id
+        WHERE c.chef_id = :chefId AND s.is_active = true
+        ORDER BY "subscriptionCreatedAt"; 
+    """)
+    List<SubscriptionWithDetailsProjection> findBySubscriptionChefId(UUID chefId);
+
+    @Query(nativeQuery = true, value = """
+        SELECT 
+            s.subscription_id  AS "subscriptionId",
+            s.user_id          AS "userId",
+            s.meal_plan_id     AS "mealPlanId",
+            s.delivery_type    AS "deliveryType",
+            s.plan_type        AS "planType",
+            s.is_active        AS "isActive",
+            s.price            AS "price",
+            s.delivery_fee     AS "deliveryFee",
+            s.start_date       AS "startDate",
+            s.end_date         AS "endDate",
+            s.created_at       AS "subscriptionCreatedAt",
+            s.updated_at       AS "subscriptionUpdatedAt",
+
+            b.bill_id          AS "billId",
+            b.order_id         AS "orderId",
+            b.name             AS "billName",
+            b.amount           AS "billAmount",
+            b.status           AS "billStatus",
+            b.created_at       AS "billCreatedAt",
+            b.updated_at       AS "billUpdatedAt",
+
+            p.payment_id       AS "paymentId",
+            p.amount           AS "paymentAmount",
+            p.payment_via      AS "paymentVia",
+            p.created_at       AS "paymentCreatedAt",
+            p.updated_at       AS "paymentUpdatedAt",
+            
+            u.name             AS "userName",
+            u.mobile_no        AS "userMobileNo",
+            u.address          AS "userAddress",
+            u.created_at       AS "userCreatedAt",
+            u.updated_at       AS "userUpdatedAt",
+            
+            mp.chef_id         AS "chefId",
+            mp.meal_type       AS "mealType",
+            mp.weekly_price    AS "weeklyPrice",
+            mp.monthly_price   AS "monthlyPrice",
+            mp.timing          AS "timing",
+            mp.capacity        AS "capacity",
+            mp.created_at      AS "mealPlanCreatedAt",
+            mp.updated_at      AS "mealPlanUpdatedAt",
+                
+            c.name             AS "chefName",
+            c.mobile_no        AS "chefMobileNo",
+            c.address          AS "chefAddress",
+            c.rating           AS "chefRating",
+            c.created_at       AS "chefCreatedAt",
+            c.updated_at       AS "chefUpdatedAt"
+        FROM subscriptions s
+        JOIN users u 
+            ON u.user_id = s.user_id
+        JOIN meal_plans mp
+            ON mp.meal_plan_id = s.meal_plan_id
+        JOIN chefs c
+            ON c.chef_id = mp.chef_id
+        LEFT JOIN bills b
+            ON b.subscription_id = s.subscription_id
+        LEFT JOIN payments p
+            ON p.bill_id = b.bill_id
         WHERE s.subscription_id = :subscriptionId
         ORDER BY "subscriptionCreatedAt"; 
     """)
