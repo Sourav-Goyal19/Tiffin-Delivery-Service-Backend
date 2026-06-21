@@ -2,6 +2,7 @@ package com.example.tds.dto.responses;
 
 import com.example.tds.enums.DeliveryType;
 import com.example.tds.enums.PlanType;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubscriptionResponse {
     private UUID subscriptionId;
     private UUID userId;

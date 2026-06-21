@@ -9,6 +9,8 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubscriptionWithDetailsResponse {
     private SubscriptionResponse subscription;
+    private BillResponse bill;
+    private PaymentResponse payment;
     private UserResponse user;
     private ChefResponse chef;
     private MealPlanResponse mealPlan;

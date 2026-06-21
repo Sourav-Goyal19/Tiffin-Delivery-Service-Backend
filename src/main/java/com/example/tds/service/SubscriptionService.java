@@ -49,6 +49,10 @@ public class SubscriptionService {
         MealPlanEntity mealPlan = mealPlanRepository.findByMealPlanId(mealPlanId)
                 .orElseThrow(()-> new BadRequestException("Invalid meal plan id"));
 
+        if (mealPlan.getRemainingCapacity() != null && mealPlan.getRemainingCapacity() <= 0) {
+            throw new BadRequestException("Meal plan has reached its maximum capacity");
+        }
+
         ChefEntity chef = mealPlan.getChef();
 
         double distanceInKm = subscriptionRepository.findDisInKm(user.getLocation(), chef.getLocation()).getDisInKm();
@@ -71,6 +75,7 @@ public class SubscriptionService {
 
         subscription.setUser(user);
         subscription.setMealPlan(mealPlan);
+        subscription.setIsActive(false);
 
         LocalDate startDate = LocalDate.now().plusDays(1);
         subscription.setStartDate(startDate);
@@ -91,6 +96,11 @@ public class SubscriptionService {
         }
 
         subscription = subscriptionRepository.save(subscription);
+
+        if (mealPlan.getRemainingCapacity() != null) {
+            mealPlan.setRemainingCapacity(mealPlan.getRemainingCapacity() - 1);
+            mealPlanRepository.save(mealPlan);
+        }
 
         double totalAmount = subscription.getPrice() + totalDeliveryFee;
 
@@ -141,6 +151,32 @@ public class SubscriptionService {
                 .updatedAt(projection.getSubscriptionUpdatedAt())
                 .build();
 
+        BillResponse bill = null;
+        if (projection.getBillId() != null) {
+            bill = BillResponse.builder()
+                    .billId(projection.getBillId())
+                    .subscriptionId(projection.getSubscriptionId())
+                    .orderId(projection.getOrderId())
+                    .name(projection.getBillName())
+                    .amount(projection.getBillAmount())
+                    .status(projection.getBillStatus())
+                    .createdAt(projection.getBillCreatedAt())
+                    .updatedAt(projection.getBillUpdatedAt())
+                    .build();
+        }
+
+        PaymentResponse payment = null;
+        if (projection.getPaymentId() != null) {
+            payment = PaymentResponse.builder()
+                    .paymentId(projection.getPaymentId())
+                    .billId(projection.getBillId())
+                    .amount(projection.getPaymentAmount())
+                    .paymentVia(projection.getPaymentVia())
+                    .createdAt(projection.getPaymentCreatedAt())
+                    .updatedAt(projection.getPaymentUpdatedAt())
+                    .build();
+        }
+
         UserResponse user = UserResponse.builder()
                 .id(projection.getUserId())
                 .name(projection.getUserName())
@@ -173,6 +209,8 @@ public class SubscriptionService {
                 .build();
 
         response.setSubscription(subscription);
+        response.setBill(bill);
+        response.setPayment(payment);
         response.setUser(user);
         response.setChef(chef);
         response.setMealPlan(mealPlan);
@@ -180,4 +218,3 @@ public class SubscriptionService {
         return response;
     }
 }
-

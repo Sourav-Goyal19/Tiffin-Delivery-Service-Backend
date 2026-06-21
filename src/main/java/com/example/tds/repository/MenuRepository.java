@@ -44,6 +44,7 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             mp.monthly_price AS "monthlyPrice",
             mp.capacity      AS "mealPlanCapacity",
             mp.timing        AS "timing",
+            mp.remaining_capacity AS "mealPlanRemainingCapacity",
             mp.is_active     AS "mealPlanIsActive",
             mp.created_at    AS "mealPlanCreatedAt",
             mp.updated_at    AS "mealPlanUpdatedAt"
@@ -54,6 +55,7 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             ON m.meal_type = mp.meal_type
             AND m.chef_id = mp.chef_id
             AND mp.is_active = true
+            AND (mp.remaining_capacity IS NOT NULL AND mp.remaining_capacity > 0)
         JOIN users u
             ON u.user_id = :userId
         WHERE ST_DWithin(
@@ -97,6 +99,7 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             mp.monthly_price AS "monthlyPrice",
             mp.capacity      AS "mealPlanCapacity",
             mp.timing        AS "timing",
+            mp.remaining_capacity AS "mealPlanRemainingCapacity",
             mp.is_active     AS "mealPlanIsActive",
             mp.created_at    AS "mealPlanCreatedAt",
             mp.updated_at    AS "mealPlanUpdatedAt"
@@ -107,6 +110,7 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             ON mp.meal_type = m.meal_type
             AND mp.chef_id = c.chef_id
             AND mp.is_active = true
+            AND (mp.remaining_capacity IS NOT NULL AND mp.remaining_capacity > 0)
         JOIN users u
             ON u.user_id = :userId
         WHERE m.is_active = true AND c.chef_id = :chefId

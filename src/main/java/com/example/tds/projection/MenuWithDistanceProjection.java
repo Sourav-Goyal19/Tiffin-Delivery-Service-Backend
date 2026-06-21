@@ -33,6 +33,7 @@ public interface MenuWithDistanceProjection {
     Double getWeeklyPrice();
     Double getMonthlyPrice();
     Integer getMealPlanCapacity();
+    Integer getMealPlanRemainingCapacity();
     java.time.LocalTime getTiming();
     Boolean getMealPlanIsActive();
     LocalDateTime getMealPlanCreatedAt();

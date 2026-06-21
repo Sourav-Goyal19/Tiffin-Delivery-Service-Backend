@@ -1,6 +1,7 @@
 package com.example.tds.dto.requests.mealplans;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,4 +19,8 @@ public class UpdateMealPlanRequest {
 
     @NotNull(message = "is active is required")
     private Boolean isActive;
+
+    @NotNull(message = "capacity is required")
+    @Positive(message = "capacity can't be 0")
+    private Integer capacity;
 }

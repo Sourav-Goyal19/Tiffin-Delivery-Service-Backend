@@ -41,12 +41,18 @@ public class MealPlanEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
+    @Column(name = "capacity", nullable = false)
+    private Integer capacity = 3;
+
+    @Column(name = "remaining_capacity", nullable = false)
+    private Integer remainingCapacity = 3;
+
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
@@ -62,6 +68,14 @@ public class MealPlanEntity {
 
         if(monthlyPrice != null && monthlyPrice <= 0){
             throw new IllegalArgumentException("Monthly price can't be less than or equal to 0");
+        }
+
+        if (capacity <= 0){
+            throw new IllegalArgumentException("Capacity can't be less than or equal to 0");
+        }
+
+        if (remainingCapacity > capacity){
+            throw new IllegalArgumentException("Remaining capacity can't be greater than capacity");
         }
     }
 }
