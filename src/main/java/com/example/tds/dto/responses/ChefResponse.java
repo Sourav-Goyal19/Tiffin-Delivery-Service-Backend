@@ -1,24 +1,28 @@
 package com.example.tds.dto.responses;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.locationtech.jts.geom.Point;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChefResponse {
     private UUID chefId;
     private String name;
     private String address;
     private String mobileNo;
-    private Double dayPrice;
-    private Double weeklyPrice;
-    private Double monthlyPrice;
+    private String avatarUrl;
+    private Double rating;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
+    private Double disInKm;
     private String refreshToken;
     private String accessToken;
 }
