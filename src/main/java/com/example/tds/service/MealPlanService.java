@@ -26,7 +26,6 @@ public class MealPlanService {
         Double weeklyPrice = mealPlanRequest.getWeeklyPrice();
         Double monthlyPrice = mealPlanRequest.getMonthlyPrice();
 
-
         if(weeklyPrice != null && weeklyPrice <= 0){
             throw new BadRequestException("Weekly price must be greater than 0");
         }
@@ -47,6 +46,7 @@ public class MealPlanService {
         }
 
         mealPlan.setChef(chef);
+        mealPlan.setRemainingCapacity(mealPlanRequest.getCapacity());
 
         mealPlan = mealPlanRepository.save(mealPlan);
 
@@ -89,6 +89,18 @@ public class MealPlanService {
         existingMealPlan.setMonthlyPrice(updatedMealPlan.getMonthlyPrice());
         existingMealPlan.setTiming(updatedMealPlan.getTiming());
         existingMealPlan.setIsActive(updatedMealPlan.getIsActive());
+
+        int oldCapacity = existingMealPlan.getCapacity();
+        int newCapacity = updatedMealPlan.getCapacity();
+        int oldRemaining = existingMealPlan.getRemainingCapacity();
+        int activeSubscriptions = oldCapacity - oldRemaining;
+
+        if(newCapacity < activeSubscriptions){
+            throw new BadRequestException("Capacity can't be less than active subscriptions");
+        }
+
+        existingMealPlan.setCapacity(newCapacity);
+        existingMealPlan.setRemainingCapacity(newCapacity - activeSubscriptions);
 
         updatedMealPlan = mealPlanRepository.save(existingMealPlan);
 
