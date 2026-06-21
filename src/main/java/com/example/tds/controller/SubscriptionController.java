@@ -53,7 +53,33 @@ public class SubscriptionController {
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
+                        .message("Subscription found successfully")
+                        .success(true)
+                        .data(Map.of("subscription", response))
+                        .build()
+        );
+    }
+
+    @GetMapping("/chefs/{chefId}/subscriptions")
+    public ResponseEntity<ApiResponse> getChefSubscriptions(@PathVariable("chefId") UUID chefId){
+        List<SubscriptionWithDetailsResponse> response = subscriptionService.getSubscriptionsByChefId(chefId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
                         .message("Subscriptions found successfully")
+                        .success(true)
+                        .data(Map.of("subscriptions", response))
+                        .build()
+        );
+    }
+
+    @GetMapping("/chefs/{chefId}/subscriptions/{subscriptionId}")
+    public ResponseEntity<ApiResponse> getSubscriptionByIdForChef(@PathVariable("subscriptionId") UUID subscriptionId){
+        SubscriptionWithDetailsResponse response = subscriptionService.getSubscription(subscriptionId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Subscription found successfully")
                         .success(true)
                         .data(Map.of("subscription", response))
                         .build()

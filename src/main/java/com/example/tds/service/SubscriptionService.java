@@ -112,6 +112,11 @@ public class SubscriptionService {
         return projections.stream().map(this::mapToSubscriptionWithDetailsResponse).toList();
     }
 
+    public List<SubscriptionWithDetailsResponse> getSubscriptionsByChefId(UUID chefId) {
+        List<SubscriptionWithDetailsProjection> projections = subscriptionRepository.findBySubscriptionChefId(chefId);
+        return projections.stream().map(this::mapToSubscriptionWithDetailsResponse).toList();
+    }
+
     private double calculateDeliveryFee(int distance) {
         double fees = (distanceBaseFee + (distance * distanceRatePerKm));
         int fee = (int) fees / 10;
