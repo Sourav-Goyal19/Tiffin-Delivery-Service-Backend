@@ -20,6 +20,7 @@ public class MealPlanResponse {
     private Double weeklyPrice;
     private Double monthlyPrice;
     private Integer capacity;
+    private Integer remainingCapacity;
     private LocalTime timing;
     private Boolean isActive;
     private UUID chefId;

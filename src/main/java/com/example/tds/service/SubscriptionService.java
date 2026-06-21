@@ -49,6 +49,10 @@ public class SubscriptionService {
         MealPlanEntity mealPlan = mealPlanRepository.findByMealPlanId(mealPlanId)
                 .orElseThrow(()-> new BadRequestException("Invalid meal plan id"));
 
+        if (mealPlan.getRemainingCapacity() != null && mealPlan.getRemainingCapacity() <= 0) {
+            throw new BadRequestException("Meal plan has reached its maximum capacity");
+        }
+
         ChefEntity chef = mealPlan.getChef();
 
         double distanceInKm = subscriptionRepository.findDisInKm(user.getLocation(), chef.getLocation()).getDisInKm();
@@ -92,6 +96,11 @@ public class SubscriptionService {
         }
 
         subscription = subscriptionRepository.save(subscription);
+
+        if (mealPlan.getRemainingCapacity() != null) {
+            mealPlan.setRemainingCapacity(mealPlan.getRemainingCapacity() - 1);
+            mealPlanRepository.save(mealPlan);
+        }
 
         double totalAmount = subscription.getPrice() + totalDeliveryFee;
 
