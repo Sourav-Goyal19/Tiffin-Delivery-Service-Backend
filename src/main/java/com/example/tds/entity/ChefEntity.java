@@ -20,7 +20,7 @@ public class ChefEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID chefId;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name")
     private String name;
 
     @Column(name = "mobile_no", nullable = false, length = 10, unique = true)
