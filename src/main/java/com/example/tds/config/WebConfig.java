@@ -3,6 +3,7 @@ package com.example.tds.config;
 import com.example.tds.interceptors.ChefAuthInterceptor;
 import com.example.tds.interceptors.UserAuthInterceptor;
 import com.example.tds.interceptors.LogInterceptor;
+import com.example.tds.interceptors.DeliveryAgentAuthInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -19,6 +20,8 @@ public class WebConfig implements WebMvcConfigurer {
    private LogInterceptor logInterceptor;
    @Autowired
    private ChefAuthInterceptor chefAuthInterceptor;
+   @Autowired
+   private DeliveryAgentAuthInterceptor deliveryAgentAuthInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry){
@@ -44,6 +47,16 @@ public class WebConfig implements WebMvcConfigurer {
                                 "/api/chefs/otp/verify",
                                 "/api/chefs/signup",
                                 "/api/chefs/refresh"
+                        )
+                );
+
+        registry.addInterceptor(deliveryAgentAuthInterceptor)
+                .addPathPatterns("/api/delivery-agents/**")
+                .excludePathPatterns(
+                        List.of(
+                                "/api/delivery-agents/otp/generate",
+                                "/api/delivery-agents/otp/verify",
+                                "/api/delivery-agents/refresh"
                         )
                 );
     }
