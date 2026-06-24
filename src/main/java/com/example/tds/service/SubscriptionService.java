@@ -84,13 +84,13 @@ public class SubscriptionService {
 
         if(planType == PlanType.WEEKLY){
             subscription.setPrice(mealPlan.getWeeklyPrice());
-            subscription.setEndDate(startDate.plusDays(7));
+            subscription.setEndDate(startDate.plusDays(7 - 1));
             totalDeliveryFee = deliveryFee * 7;
             subscription.setDeliveryFee(totalDeliveryFee);
         }
         else if(planType == PlanType.MONTHLY){
             subscription.setPrice(mealPlan.getMonthlyPrice());
-            subscription.setEndDate(startDate.plusDays(30));
+            subscription.setEndDate(startDate.plusDays(30 - 1));
             totalDeliveryFee = deliveryFee * 30;
             subscription.setDeliveryFee(totalDeliveryFee);
         }
