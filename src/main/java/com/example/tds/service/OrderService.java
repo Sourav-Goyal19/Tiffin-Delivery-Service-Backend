@@ -1,7 +1,10 @@
 package com.example.tds.service;
 
+import com.example.tds.dto.responses.OrderResponse;
 import com.example.tds.entity.*;
+import com.example.tds.enums.OrderStatus;
 import com.example.tds.exception.ResourceNotFoundException;
+import com.example.tds.mapper.OrderMapper;
 import com.example.tds.repository.OrderRepository;
 import com.example.tds.repository.SubscriptionRepository;
 import jakarta.transaction.Transactional;
@@ -19,7 +22,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final OrderMapper orderMapper;
     private final SubscriptionRepository subscriptionRepository;
+    private final DeliveryService deliveryService;
 
     @Transactional
     public void createOrder(UUID subscriptionId){
@@ -49,5 +54,26 @@ public class OrderService {
         }
 
         orderRepository.saveAll(orders);
+    }
+
+    public OrderResponse assignDeliveryAgent(UUID orderId){
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        SubscriptionEntity subscription = order.getSubscription();
+        UserEntity user = subscription.getUser();
+        MealPlanEntity mealPlan = subscription.getMealPlan();
+        ChefEntity chef = mealPlan.getChef();
+
+        DeliveryAgentEntity deliveryAgent = deliveryService.getDeliveryAgent(order);
+
+        order.setDeliveryAgent(deliveryAgent);
+        order.setFromLocation(chef.getAddress());
+        order.setToLocation(user.getAddress());
+        order.setStatus(OrderStatus.ASSIGNED);
+
+        order = orderRepository.save(order);
+
+        return orderMapper.toOrderResponse(order);
     }
 }

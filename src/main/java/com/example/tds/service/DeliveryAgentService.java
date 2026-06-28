@@ -19,7 +19,14 @@ import com.example.tds.dto.requests.common.UpdateAgentLocationRequest;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+
+import org.springframework.data.geo.*;
+import com.example.tds.enums.DeliveryAgentCurrentStatus;
+import org.springframework.data.redis.core.GeoOperations;
+import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
+import org.springframework.data.redis.connection.RedisGeoCommands.GeoRadiusCommandArgs;
 
 @Slf4j
 @Service
@@ -28,6 +35,9 @@ public class DeliveryAgentService {
     private final JwtUtility jwt;
     private final DeliveryAgentMapper deliveryAgentMapper;
     private final DeliveryAgentRepository deliveryAgentRepository;
+    private final GeoOperations<String, UUID> geoOperations;
+
+    private final String deliveryAgentsKeyName = "delivery_agents_location";
 
     long refreshTokenExpiry = 7 * 24 * 60 * 60 * 1000L;
     long accessTokenExpiry = 3 * 60 * 60 * 1000L;
@@ -133,5 +143,44 @@ public class DeliveryAgentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Delivery Agent not found"));
 
         return deliveryAgentMapper.toDeliveryAgentResponse(updatedAgent);
+    }
+
+    public void updateDeliveryAgentLocation(double longitude, double latitude, UUID deliveryAgentId) {
+        geoOperations.add(
+                deliveryAgentsKeyName,
+                new Point(longitude, latitude),
+                deliveryAgentId
+        );
+    }
+
+    public List<DeliveryAgentEntity> findNearbyActiveAgents(Point location, int radiusKm) {
+        Circle circle = new Circle(
+                new Point(location.getX(), location.getY()),
+                new Distance(radiusKm, Metrics.KILOMETERS)
+        );
+
+        GeoRadiusCommandArgs args = GeoRadiusCommandArgs.newGeoRadiusArgs()
+                .includeCoordinates()
+                .includeDistance()
+                .sortAscending();
+
+        GeoResults<GeoLocation<UUID>> ids = geoOperations.radius(
+                deliveryAgentsKeyName,
+                circle,
+                args
+        );
+
+        if (ids == null || ids.getContent().isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> deliveryAgentIds = ids.getContent().stream()
+                .map(result -> result.getContent().getName())
+                .toList();
+
+        return deliveryAgentRepository.findByDeliveryAgentIdInAndCurrentStatus(
+                deliveryAgentIds,
+                DeliveryAgentCurrentStatus.ACTIVE
+        );
     }
 }

@@ -101,4 +101,16 @@ public class DeliveryAgentController {
                         .build()
         );
     }
+
+    @PatchMapping("/{deliveryAgentId}/live-location")
+    public ResponseEntity<ApiResponse> updateLiveLocation(@PathVariable("deliveryAgentId") UUID deliveryAgentId, @RequestBody @Valid UpdateAgentLocationRequest locationRequest) {
+        deliveryAgentService.updateDeliveryAgentLocation(locationRequest.getLongitude(), locationRequest.getLatitude(), deliveryAgentId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Live location updated successfully")
+                        .success(true)
+                        .build()
+        );
+    }
 }

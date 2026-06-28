@@ -37,6 +37,7 @@ public class PostgresNotificationListener {
     @PostConstruct
     public void startListening(){
         log.info("Starting PostgreSQL listener...");
+        // :-: External thread for postgres listener, main thread :-:
         new Thread(this::listen).start();
     }
 
@@ -44,8 +45,9 @@ public class PostgresNotificationListener {
         try(Connection connection = DriverManager.getConnection(listenerUrl, username, password)) {
             PGConnection pgConnection = connection.unwrap(PGConnection.class);
 
+            // :-: statement executor using which we can execute all postgres commands :-:
             try(Statement statement = connection.createStatement()) {
-                statement.execute("LISTEN new_orders_channel");
+                statement.execute("LISTEN new_orders_channel"); // I'm subscribing to 'new_orders_channel'
             }
 
             while (true) {
