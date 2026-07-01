@@ -26,9 +26,15 @@ public class RedisConfig {
     }
 
     @Bean
-    public GeoOperations<String, UUID> geoOperations(RedisTemplate<String, UUID> template) {
+    public RedisTemplate<String, UUID> redisTemplate(RedisConnectionFactory connectionFactory) {
         // :-: here RedisTemplate is a global object using which we execute all redis commands/operations like we are using opsForGeo for geo operations, others can be opsForValues for key-value pairs for caching, opsForHash, opsForZSet, etc :-:
+        RedisTemplate<String, UUID> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        return template;
+    }
 
+    @Bean
+    public GeoOperations<String, UUID> geoOperations(RedisTemplate<String, UUID> template) {
         return template.opsForGeo();
     }
 }
