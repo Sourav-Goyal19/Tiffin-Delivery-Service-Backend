@@ -129,22 +129,6 @@ public class DeliveryAgentService {
                 .build();
     }
 
-    public DeliveryAgentResponse handleUpdateLocation(UUID deliveryAgentId, UpdateAgentLocationRequest locationRequest) {
-        DeliveryAgentEntity existingAgent = deliveryAgentRepository.findById(deliveryAgentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Delivery Agent not found"));
-
-        deliveryAgentRepository.updateLocation(
-                deliveryAgentId,
-                locationRequest.getLongitude(),
-                locationRequest.getLatitude()
-        );
-
-        DeliveryAgentEntity updatedAgent = deliveryAgentRepository.findByMobileNo(existingAgent.getMobileNo())
-                .orElseThrow(() -> new ResourceNotFoundException("Delivery Agent not found"));
-
-        return deliveryAgentMapper.toDeliveryAgentResponse(updatedAgent);
-    }
-
     public void updateDeliveryAgentLocation(double longitude, double latitude, UUID deliveryAgentId) {
         geoOperations.add(
                 deliveryAgentsKeyName,

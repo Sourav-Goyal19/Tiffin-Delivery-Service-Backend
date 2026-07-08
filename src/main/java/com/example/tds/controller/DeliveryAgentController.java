@@ -88,29 +88,4 @@ public class DeliveryAgentController {
                         .build()
         );
     }
-
-    @PatchMapping("/{deliveryAgentId}/location")
-    public ResponseEntity<ApiResponse> updateLocation(@PathVariable("deliveryAgentId") UUID deliveryAgentId, @RequestBody @Valid UpdateAgentLocationRequest locationRequest) {
-        DeliveryAgentResponse response = deliveryAgentService.handleUpdateLocation(deliveryAgentId, locationRequest);
-
-        return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.builder()
-                        .message("Location updated successfully")
-                        .success(true)
-                        .data(Map.of("deliveryAgent", response))
-                        .build()
-        );
-    }
-
-    @PatchMapping("/{deliveryAgentId}/live-location")
-    public ResponseEntity<ApiResponse> updateLiveLocation(@PathVariable("deliveryAgentId") UUID deliveryAgentId, @RequestBody @Valid UpdateAgentLocationRequest locationRequest) {
-        deliveryAgentService.updateDeliveryAgentLocation(locationRequest.getLongitude(), locationRequest.getLatitude(), deliveryAgentId);
-
-        return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.builder()
-                        .message("Live location updated successfully")
-                        .success(true)
-                        .build()
-        );
-    }
 }
