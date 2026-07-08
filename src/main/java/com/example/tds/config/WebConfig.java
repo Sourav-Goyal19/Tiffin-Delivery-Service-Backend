@@ -56,7 +56,8 @@ public class WebConfig implements WebMvcConfigurer {
                         List.of(
                                 "/api/delivery-agents/otp/generate",
                                 "/api/delivery-agents/otp/verify",
-                                "/api/delivery-agents/refresh"
+                                "/api/delivery-agents/refresh",
+                                "/api/delivery-agents/location"
                         )
                 );
     }
