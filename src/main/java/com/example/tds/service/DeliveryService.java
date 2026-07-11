@@ -14,6 +14,7 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,13 +23,16 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 @RequiredArgsConstructor
 public class DeliveryService {
+    private final FCMService fcmService;
     private final ChefRepository chefRepository;
     private final UserRepository userRepository;
     private final RedisMessageListenerContainer container;
     private final DeliveryAgentService deliveryAgentService;
     private final SubscriptionRepository subscriptionRepository;
     private final DeliveryAgentRepository deliveryAgentRepository;
-//    private final NotificationService notificationService;
+
+    @Value("${order.channel.name}")
+    private String orderChannelName;
 
     @Value("${distance.rate.per.km}")
     private int distanceRatePerKm;
@@ -56,21 +60,22 @@ public class DeliveryService {
 
     public DeliveryAgentEntity getDeliveryAgent(OrderEntity order) {
         int minimumKm = 1;
-        int maximumKm = 5;
+        int maximumKm = 3;
 
         SubscriptionEntity subscription = order.getSubscription();
         MealPlanEntity mealPlan = subscription.getMealPlan();
         ChefEntity chef = mealPlan.getChef();
+        UserEntity user = subscription.getUser();
 
-        String channelName = "order_" + order.getOrderId();
+        String channelName = orderChannelName + "_" + order.getOrderId();
         DeliveryAgentEntity assignedAgent = null;
 
         org.locationtech.jts.geom.Point chefLocation = chef.getLocation();
         Point searchPoint = new Point(chefLocation.getX(), chefLocation.getY());
 
-        // :-: Finds delivery agents under specific radius :-:
+        // :-: Finds delivery agents under specific the radius :-:
         for (int i = minimumKm; i <= maximumKm; i++) {
-
+            log.info("Finding nearby delivery agent under {}km now", i);
             List<DeliveryAgentEntity> deliveryAgents = deliveryAgentService.findNearbyActiveAgents(searchPoint, i);
 
             if (deliveryAgents.isEmpty()) {
@@ -78,9 +83,14 @@ public class DeliveryService {
                 continue;
             }
 
-            // :-: TODO: Send push-in notification for the order delivery request to all the found delivery agents. :-:
+            // :-: Send FCM push notification for the order delivery request to all the found delivery agents :-:
+            sendDeliveryRequestToAgents(deliveryAgents, order, channelName, chef, user, subscription);
 
+            // :-: Wait 30 seconds for agents to accept the current delivery request :-:
             assignedAgent = subscribeAndWaitForResponse(channelName, waitTimeInSeconds);
+
+            if(assignedAgent != null) log.info("Assigned delivery agent {}", assignedAgent.getDeliveryAgentId());
+            else log.info("Null delivery agent");
 
             if (assignedAgent != null) break; // If agent has found, don't find further
         }
@@ -92,8 +102,38 @@ public class DeliveryService {
         return assignedAgent;
     }
 
+
+    private void sendDeliveryRequestToAgents(
+            List<DeliveryAgentEntity> agents,
+            OrderEntity order,
+            String channelName,
+            ChefEntity chef,
+            UserEntity user,
+            SubscriptionEntity subscription
+    ) {
+        Map<String, String> data = Map.of(
+                "orderId",          order.getOrderId().toString(),
+                "channelName",      channelName,
+                "fromLocation",     order.getFromLocation(),
+                "toLocation",       order.getToLocation(),
+                "chefName",         chef.getName() != null ? chef.getName() : "",
+                "customerName",     user.getName() != null ? user.getName() : "",
+                "deliveryFee",      String.valueOf(subscription.getDeliveryAgentFee()),
+                "expiresInSeconds", String.valueOf(waitTimeInSeconds)
+        );
+
+        for (DeliveryAgentEntity agent : agents) {
+            if (agent.getFcmToken() == null || agent.getFcmToken().isBlank()) {
+                log.warn("Delivery agent {} has no FCM token, skipping push notification", agent.getDeliveryAgentId());
+                continue;
+            }
+            log.info("Send delivery request to agent: {}", agent.getDeliveryAgentId());
+            fcmService.sendDeliveryRequestNotification(agent.getFcmToken(), data);
+        }
+    }
+
     private DeliveryAgentEntity subscribeAndWaitForResponse(String channelName, int waitTimeInSeconds) {
-        // :-: Keeps the static value across different threads like listener thread, main thread, etc. :-:
+        // :-: It keeps the static value across different threads like listener thread, main thread, etc. :-:
         AtomicReference<String> deliveryAgentId = new AtomicReference<>(null);
 
         /* :-: latch is used to pause a main thread, until we found a delivery guy :-:
@@ -103,7 +143,7 @@ public class DeliveryService {
         // :-: Our listener function that listens when someone publishes :-:
         MessageListener listener = (message, channel) -> {
             String body = new String(message.getBody());
-
+            log.info("Received delivery agent body {}", body);
             try{
                 if(body.startsWith("delivery_agent_")) {
                     String id = body.substring("delivery_agent_".length());
@@ -122,6 +162,7 @@ public class DeliveryService {
             boolean received = latch.await(waitTimeInSeconds + 5, TimeUnit.SECONDS);
 
             if (received && deliveryAgentId.get() != null) {
+                log.info("Delivery agent {} received", deliveryAgentId.get());
                 UUID agentId = UUID.fromString(deliveryAgentId.get());
 
                 return deliveryAgentRepository.findByDeliveryAgentId(agentId)

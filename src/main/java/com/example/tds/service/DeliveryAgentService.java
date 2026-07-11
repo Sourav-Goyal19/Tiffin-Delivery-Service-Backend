@@ -4,18 +4,20 @@ import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import com.example.tds.utilities.JwtUtility;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import com.example.tds.mapper.DeliveryAgentMapper;
 import com.example.tds.entity.DeliveryAgentEntity;
 import com.example.tds.exception.BadRequestException;
 import com.example.tds.exception.UnauthorizedException;
+import org.springframework.beans.factory.annotation.Value;
 import com.example.tds.repository.DeliveryAgentRepository;
+import org.springframework.data.redis.core.RedisTemplate;
 import com.example.tds.dto.responses.DeliveryAgentResponse;
 import com.example.tds.exception.ResourceNotFoundException;
 import com.example.tds.dto.requests.common.OtpVerifyRequest;
 import com.example.tds.dto.requests.common.UpdateNameRequest;
 import com.example.tds.dto.requests.common.OtpGenerationRequest;
-import com.example.tds.dto.requests.common.UpdateAgentLocationRequest;
 
 import java.util.Map;
 import java.util.UUID;
@@ -34,8 +36,12 @@ import org.springframework.data.redis.connection.RedisGeoCommands.GeoRadiusComma
 public class DeliveryAgentService {
     private final JwtUtility jwt;
     private final DeliveryAgentMapper deliveryAgentMapper;
-    private final DeliveryAgentRepository deliveryAgentRepository;
     private final GeoOperations<String, UUID> geoOperations;
+    private final DeliveryAgentRepository deliveryAgentRepository;
+    private final StringRedisTemplate template;
+
+    @Value("${order.channel.name}")
+    private String orderChannelName;
 
     private final String deliveryAgentsKeyName = "delivery_agents_location";
 
@@ -158,7 +164,13 @@ public class DeliveryAgentService {
             return List.of();
         }
 
+        int minRadius = Math.max(radiusKm - 1, 0);
+
         List<UUID> deliveryAgentIds = ids.getContent().stream()
+                .filter(result -> {
+                    Distance distance = result.getDistance();
+                    return distance.getValue() > minRadius && distance.getValue() <= radiusKm;
+                })
                 .map(result -> result.getContent().getName())
                 .toList();
 
@@ -166,5 +178,19 @@ public class DeliveryAgentService {
                 deliveryAgentIds,
                 DeliveryAgentCurrentStatus.ACTIVE
         );
+    }
+
+    public void handleUpdateFcmToken(UUID deliveryAgentId, String fcmToken) {
+        DeliveryAgentEntity agent = deliveryAgentRepository.findByDeliveryAgentId(deliveryAgentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Delivery Agent not found"));
+
+        agent.setFcmToken(fcmToken);
+
+        deliveryAgentRepository.save(agent);
+    }
+
+    public void publishDeliveryRequest(UUID deliveryAgentId, UUID orderId) {
+        String channelName = orderChannelName + "_" + orderId;
+        Long received = template.convertAndSend(channelName, "delivery_agent_" + deliveryAgentId);
     }
 }

@@ -17,6 +17,7 @@ public class DeliveryAgentResponse {
     private UUID deliveryAgentId;
     private String name;
     private String mobileNo;
+    private String fcmToken;
     private DeliveryAgentCurrentStatus currentStatus;
     private LocalDateTime createdAt;
     private LocalDateTime lastActiveAt;

@@ -76,6 +76,7 @@ public class SubscriptionService {
         subscription.setUser(user);
         subscription.setMealPlan(mealPlan);
         subscription.setIsActive(false);
+        subscription.setDeliveryAgentFee(deliveryFee);
 
         LocalDate startDate = LocalDate.now().plusDays(1);
         subscription.setStartDate(startDate);

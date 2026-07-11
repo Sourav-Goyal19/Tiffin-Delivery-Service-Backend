@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.util.UUID;
 
@@ -22,6 +23,9 @@ public class RedisConfig {
 
         // :-: Adding listener to our connection. :-:
         container.setConnectionFactory(connectionFactory);
+        // :-: Setting its serialization technique to string, so that it doesn't add any random byte to the text.
+        container.setTopicSerializer(new StringRedisSerializer());
+
         return container;
     }
 
@@ -31,6 +35,11 @@ public class RedisConfig {
         RedisTemplate<String, UUID> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         return template;
+    }
+
+    @Bean
+    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
+        return new StringRedisTemplate(connectionFactory);
     }
 
     @Bean

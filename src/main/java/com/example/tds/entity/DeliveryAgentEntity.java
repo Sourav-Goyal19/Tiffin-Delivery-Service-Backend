@@ -44,4 +44,7 @@ public class DeliveryAgentEntity {
     @UpdateTimestamp
     @Column(name = "last_active_at", nullable = false)
     private LocalDateTime lastActiveAt;
+
+    @Column(name = "fcm_token")
+    private String fcmToken;
 }
