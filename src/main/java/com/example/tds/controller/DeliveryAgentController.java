@@ -1,16 +1,16 @@
 package com.example.tds.controller;
 
-import com.example.tds.dto.requests.common.*;
-import com.example.tds.dto.responses.ApiResponse;
-import com.example.tds.dto.responses.DeliveryAgentResponse;
-import com.example.tds.entity.DeliveryAgentEntity;
-import com.example.tds.service.DeliveryAgentService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import com.example.tds.dto.requests.common.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.tds.dto.responses.ApiResponse;
+import com.example.tds.entity.DeliveryAgentEntity;
+import com.example.tds.service.DeliveryAgentService;
+import com.example.tds.dto.responses.DeliveryAgentResponse;
 
 import java.util.Map;
 import java.util.UUID;
@@ -89,15 +89,32 @@ public class DeliveryAgentController {
         );
     }
 
-    @PatchMapping("/{deliveryAgentId}/location")
-    public ResponseEntity<ApiResponse> updateLocation(@PathVariable("deliveryAgentId") UUID deliveryAgentId, @RequestBody @Valid UpdateAgentLocationRequest locationRequest) {
-        DeliveryAgentResponse response = deliveryAgentService.handleUpdateLocation(deliveryAgentId, locationRequest);
+    @PatchMapping("/{deliveryAgentId}/fcm-token")
+    public ResponseEntity<ApiResponse> updateFcmToken(
+            @PathVariable("deliveryAgentId") UUID deliveryAgentId,
+            @RequestBody @Valid UpdateFcmTokenRequest request
+    ) {
+        deliveryAgentService.handleUpdateFcmToken(deliveryAgentId, request.getFcmToken());
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
-                        .message("Location updated successfully")
+                        .message("FCM token updated successfully")
                         .success(true)
-                        .data(Map.of("deliveryAgent", response))
+                        .build()
+        );
+    }
+
+    @PatchMapping("/{deliveryAgentId}/delivery-request/{orderId}/accept")
+    public ResponseEntity<ApiResponse> updateDeliveryRequest(
+            @PathVariable("deliveryAgentId") UUID deliveryAgentId,
+            @PathVariable("orderId") UUID orderId
+    ){
+        deliveryAgentService.publishDeliveryRequest(deliveryAgentId, orderId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Published successfully")
+                        .success(true)
                         .build()
         );
     }

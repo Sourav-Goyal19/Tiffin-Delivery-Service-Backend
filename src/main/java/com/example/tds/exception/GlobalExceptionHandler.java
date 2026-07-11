@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoResourceFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFound(ResourceNotFoundException ex){
+    public ErrorResponse handleNotFound(NoResourceFoundException ex){
         return ErrorResponse.builder()
                 .message(ex.getMessage())
                 .success(false)

@@ -4,9 +4,17 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class UpdateAgentLocationRequest {
+    @NotNull(message = "Delivery Agent Id is required")
+    private UUID deliveryAgentId;
+
+    @NotNull(message = "Type is required")
+    private String type;
+
     @NotNull(message = "Longitude is required")
     @DecimalMin(value = "-180.0", message = "Longitude must be >= -180")
     @DecimalMax(value = "180.0", message = "Longitude must be <= 180")

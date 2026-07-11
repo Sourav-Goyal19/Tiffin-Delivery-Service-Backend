@@ -2,27 +2,52 @@ services:
   minio:
     image: minio/minio
     container_name: minio
-
     command: server /data --console-address ":9001"
-
     environment:
       MINIO_ROOT_USER: tiffin_ghar
       MINIO_ROOT_PASSWORD: tds12345
-
     networks:
       - mynet
-
     volumes:
       - minio_data:/data
-
     ports:
       - "9000:9000"
       - "9001:9001"
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - mynet
+    command: redis-server --requirepass tds123Redis --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "tds123Redis", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redis_insight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis_insight_data:/data
+    networks:
+      - mynet
 
 networks:
   mynet:
     driver: bridge
 
 volumes:
+  redis_data:
+  redis_insight_data:
   minio_data:
     driver: local

@@ -47,6 +47,9 @@ public class SubscriptionEntity {
     @Column(name = "delivery_fee", nullable = false)
     private Double deliveryFee = 0.0;
 
+    @Column(name = "delivery_agent_fee", nullable = false)
+    private Double deliveryAgentFee = 0.0;
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
