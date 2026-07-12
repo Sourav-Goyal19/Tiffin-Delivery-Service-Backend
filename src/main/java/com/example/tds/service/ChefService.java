@@ -1,6 +1,5 @@
 package com.example.tds.service;
 
-import com.example.tds.dto.requests.common.UpdateNameRequest;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -10,13 +9,15 @@ import com.example.tds.utilities.JwtUtility;
 import org.springframework.stereotype.Service;
 import com.example.tds.repository.ChefRepository;
 import com.example.tds.dto.responses.ChefResponse;
-import com.example.tds.dto.requests.common.OtpVerifyRequest;
 import com.example.tds.exception.BadRequestException;
-import com.example.tds.exception.UnauthorizedException;
-import com.example.tds.dto.requests.common.OtpGenerationRequest;
-import com.example.tds.dto.requests.common.UpdateLocationRequest;
-import com.example.tds.exception.ResourceNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.tds.exception.UnauthorizedException;
+import com.example.tds.exception.ResourceNotFoundException;
+import com.example.tds.dto.requests.common.OtpVerifyRequest;
+import com.example.tds.dto.requests.common.UpdateNameRequest;
+import com.example.tds.dto.requests.common.OtpGenerationRequest;
+import org.springframework.transaction.annotation.Transactional;
+import com.example.tds.dto.requests.common.UpdateLocationRequest;
 
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +48,7 @@ public class ChefService {
         return chefMapper.toChefResponse(existingChef);
     }
 
+    @Transactional
     public void handleOtpGeneration(OtpGenerationRequest generationRequest){
         String mobileNo = generationRequest.getMobileNo();
         ChefEntity existingChef = chefRepository.findByMobileNo(mobileNo)
@@ -67,6 +69,7 @@ public class ChefService {
         // TODO: Send OTP through email or sms
     }
 
+    @Transactional
     public ChefResponse handleOtpVerification(OtpVerifyRequest otpVerifyRequest){
         String mobileNo = otpVerifyRequest.getMobileNo();
         int otp = otpVerifyRequest.getOtp();
@@ -136,6 +139,7 @@ public class ChefService {
         return chefMapper.toChefResponse(chef);
     }
 
+    @Transactional
     public ChefResponse handleUpdateLocation(UUID chefId, UpdateLocationRequest locationRequest){
         ChefEntity existingChef = chefRepository.findByChefId(chefId)
                 .orElseThrow(()->new ResourceNotFoundException("Chef not found"));

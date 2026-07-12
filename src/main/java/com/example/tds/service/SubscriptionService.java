@@ -1,28 +1,27 @@
 package com.example.tds.service;
 
-import com.example.tds.dto.responses.*;
 import com.example.tds.entity.*;
-import com.example.tds.enums.DeliveryType;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import com.example.tds.enums.PlanType;
-import com.example.tds.exception.ResourceNotFoundException;
+import com.example.tds.dto.responses.*;
+import com.example.tds.enums.DeliveryType;
+import org.springframework.stereotype.Service;
 import com.example.tds.mapper.SubscriptionMapper;
 import com.example.tds.repository.UserRepository;
 import com.example.tds.repository.MealPlanRepository;
 import com.example.tds.exception.BadRequestException;
 import com.example.tds.repository.SubscriptionRepository;
+import org.springframework.beans.factory.annotation.Value;
+import com.example.tds.exception.ResourceNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.tds.projection.SubscriptionWithDetailsProjection;
 import com.example.tds.dto.requests.subscriptions.CreateSubscriptionRequest;
 
-import lombok.extern.slf4j.Slf4j;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -40,6 +39,7 @@ public class SubscriptionService {
     @Value("${distance.base.fee}")
     private int distanceBaseFee;
 
+    @Transactional
     public Map<String,Object> createSubscription(UUID userId, CreateSubscriptionRequest createSubscriptionRequest) {
         UUID mealPlanId = createSubscriptionRequest.getMealPlanId();
 
@@ -126,6 +126,12 @@ public class SubscriptionService {
     public List<SubscriptionWithDetailsResponse> getSubscriptionsByChefId(UUID chefId) {
         List<SubscriptionWithDetailsProjection> projections = subscriptionRepository.findBySubscriptionChefId(chefId);
         return projections.stream().map(this::mapToSubscriptionWithDetailsResponse).toList();
+    }
+
+    @Transactional
+    public void deactivateExpiredSubscriptions() {
+        int updated = subscriptionRepository.deactivateExpiredSubscriptions();
+        log.info("{} subscriptions were deactivated", updated);
     }
 
     private double calculateDeliveryFee(int distance) {

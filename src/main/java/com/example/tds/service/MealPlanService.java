@@ -10,6 +10,7 @@ import com.example.tds.repository.MealPlanRepository;
 import com.example.tds.exception.BadRequestException;
 import com.example.tds.dto.responses.MealPlanResponse;
 import com.example.tds.exception.ResourceNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.tds.dto.requests.mealplans.CreateMealPlanRequest;
 import com.example.tds.dto.requests.mealplans.UpdateMealPlanRequest;
 
@@ -22,6 +23,7 @@ public class MealPlanService {
     private final MealPlanRepository mealPlanRepository;
     private final MealPlanMapper mealPlanMapper;
 
+    @Transactional
     public MealPlanResponse handleCreateMealPlan(ChefEntity chef, CreateMealPlanRequest mealPlanRequest) {
         Double weeklyPrice = mealPlanRequest.getWeeklyPrice();
         Double monthlyPrice = mealPlanRequest.getMonthlyPrice();
@@ -66,6 +68,7 @@ public class MealPlanService {
         return mealPlanMapper.toMealPlanResponse(mealPlans);
     }
 
+    @Transactional
     public MealPlanResponse handleUpdateMealPlan(UUID chefId, UUID mealPlanId, UpdateMealPlanRequest mealPlanRequest) {
         Double weeklyPrice = mealPlanRequest.getWeeklyPrice();
         Double monthlyPrice = mealPlanRequest.getMonthlyPrice();
@@ -103,6 +106,7 @@ public class MealPlanService {
         return mealPlanMapper.toMealPlanResponse(updatedMealPlan);
     }
 
+    @Transactional
     public void handleDeleteMealPlan(UUID chefId, UUID mealPlanId) {
         MealPlanEntity existingMealPlan = findMealPlanByChefIdAndMealPlanId(chefId, mealPlanId);
 

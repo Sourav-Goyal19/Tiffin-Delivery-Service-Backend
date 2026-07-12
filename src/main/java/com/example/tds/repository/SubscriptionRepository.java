@@ -5,6 +5,7 @@ import com.example.tds.projection.DistanceProjection;
 import com.example.tds.projection.SubscriptionWithDetailsProjection;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -222,6 +223,14 @@ public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity
     ) AS disInKm
     """, nativeQuery = true)
     DistanceProjection findDisInKm(@Param("userLocation") Point userLocation, @Param("chefLocation") Point chefLocation);
+
+    @Modifying
+    @Query(nativeQuery = true, value = """
+        UPDATE subscriptions
+        SET is_active = FALSE
+        WHERE is_active = TRUE AND end_date < CURRENT_DATE;
+    """)
+    int deactivateExpiredSubscriptions();
 
     Optional<SubscriptionEntity> findByUserIdAndMealPlanMealPlanIdAndIsActive(UUID userId, UUID mealPlanId, boolean isActive);
 }
