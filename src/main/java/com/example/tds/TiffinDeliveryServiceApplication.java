@@ -4,8 +4,10 @@ import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.boot.SpringApplication;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 @OpenAPIDefinition(info = @Info(title = "TDS-Backend", version = "1.0"))
 public class TiffinDeliveryServiceApplication {
 

@@ -1,25 +1,26 @@
 package com.example.tds.service;
 
-import com.example.tds.dto.requests.common.UpdateLocationRequest;
-import com.example.tds.dto.requests.common.OtpGenerationRequest;
+import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import com.example.tds.entity.UserEntity;
+import com.example.tds.mapper.UserMapper;
+import com.example.tds.utilities.JwtUtility;
+import org.springframework.stereotype.Service;
+import com.example.tds.repository.UserRepository;
+import com.example.tds.dto.responses.UserResponse;
+import com.example.tds.exception.BadRequestException;
+import com.example.tds.exception.UnauthorizedException;
+import com.example.tds.exception.ResourceNotFoundException;
 import com.example.tds.dto.requests.common.OtpVerifyRequest;
 import com.example.tds.dto.requests.common.UpdateNameRequest;
-import com.example.tds.dto.responses.UserResponse;
-import com.example.tds.entity.UserEntity;
-import com.example.tds.exception.BadRequestException;
-import com.example.tds.exception.ResourceNotFoundException;
-import com.example.tds.exception.UnauthorizedException;
-import com.example.tds.mapper.UserMapper;
-import com.example.tds.repository.UserRepository;
-import com.example.tds.utilities.JwtUtility;
-import io.jsonwebtoken.Claims;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import com.example.tds.dto.requests.common.OtpGenerationRequest;
+import org.springframework.transaction.annotation.Transactional;
+import com.example.tds.dto.requests.common.UpdateLocationRequest;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -46,6 +47,7 @@ public class UserService {
         return userMapper.toUserResponse(existingUser);
     }
 
+    @Transactional
     public void handleOtpGeneration(OtpGenerationRequest generationRequest){
         String mobileNo = generationRequest.getMobileNo();
 
@@ -67,6 +69,7 @@ public class UserService {
         // TODO: Send OTP through email or sms
     }
 
+    @Transactional
     public UserResponse handleOtpVerification(OtpVerifyRequest otpVerifyRequest){
         String mobileNo = otpVerifyRequest.getMobileNo();
         Integer otp = otpVerifyRequest.getOtp();
@@ -124,6 +127,7 @@ public class UserService {
         return response;
     }
 
+    @Transactional
     public UserResponse handleUpdateLocation(UUID userId, UpdateLocationRequest locationRequest){
         UserEntity existingUser = userRepository.findById(userId)
                 .orElseThrow(()->new ResourceNotFoundException("User not found"));

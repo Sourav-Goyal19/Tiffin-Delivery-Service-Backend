@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import com.example.tds.utilities.JwtUtility;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import com.example.tds.mapper.DeliveryAgentMapper;
 import com.example.tds.entity.DeliveryAgentEntity;
@@ -12,12 +11,13 @@ import com.example.tds.exception.BadRequestException;
 import com.example.tds.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Value;
 import com.example.tds.repository.DeliveryAgentRepository;
-import org.springframework.data.redis.core.RedisTemplate;
 import com.example.tds.dto.responses.DeliveryAgentResponse;
 import com.example.tds.exception.ResourceNotFoundException;
 import com.example.tds.dto.requests.common.OtpVerifyRequest;
 import com.example.tds.dto.requests.common.UpdateNameRequest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import com.example.tds.dto.requests.common.OtpGenerationRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
@@ -61,6 +61,7 @@ public class DeliveryAgentService {
         return deliveryAgentMapper.toDeliveryAgentResponse(existingAgent);
     }
 
+    @Transactional
     public void handleOtpGeneration(OtpGenerationRequest generationRequest) {
         String mobileNo = generationRequest.getMobileNo();
         DeliveryAgentEntity existingAgent = deliveryAgentRepository.findByMobileNo(mobileNo)
@@ -80,6 +81,7 @@ public class DeliveryAgentService {
         // TODO: Send OTP through email or sms
     }
 
+    @Transactional
     public DeliveryAgentResponse handleOtpVerification(OtpVerifyRequest otpVerifyRequest) {
         String mobileNo = otpVerifyRequest.getMobileNo();
         int otp = otpVerifyRequest.getOtp();

@@ -1,6 +1,5 @@
 package com.example.tds.service;
 
-import com.example.tds.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import com.example.tds.enums.WeekDay;
 import com.example.tds.enums.MealType;
@@ -15,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.tds.dto.requests.menu.CreateMenuRequest;
 import com.example.tds.dto.requests.menu.UpdateMenuRequest;
 import com.example.tds.exception.ResourceNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -26,6 +26,7 @@ public class MenuService {
     private final MenuMapper menuMapper;
     private final StorageService storageService;
 
+    @Transactional
     public MenuResponse handleMenuCreation(ChefEntity chef, CreateMenuRequest createMenuRequest, MultipartFile thumbnail) {
         MenuEntity menu = menuMapper.toMenuEntity(createMenuRequest);
         menu.setChef(chef);
@@ -57,6 +58,7 @@ public class MenuService {
         return menuMapper.toMenuResponse(createdMenu);
     }
 
+    @Transactional
     public List<MenuResponse> handleMultipleMenuCreation(ChefEntity chef, List<CreateMenuRequest> createMenuRequests){
 
         List<MealType> mealTypes = new ArrayList<>(Arrays.asList(MealType.values()));
@@ -111,6 +113,7 @@ public class MenuService {
         return menuMapper.toMenuResponse(menus);
     }
 
+    @Transactional
     public MenuResponse handleUpdateMenu(UUID menuId, UpdateMenuRequest updateMenuRequest, MultipartFile thumbnail) {
         MenuEntity existingMenu = findMenuById(menuId);
         MenuEntity updatedMenu = menuMapper.toMenuEntity(updateMenuRequest);

@@ -13,6 +13,7 @@ import com.example.tds.repository.PaymentRepository;
 import com.example.tds.dto.responses.PaymentResponse;
 import com.example.tds.repository.SubscriptionRepository;
 import com.example.tds.exception.ResourceNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.tds.dto.requests.payments.CreatePaymentRequest;
 
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class PaymentService {
     private final BillRepository billRepository;
     private final SubscriptionRepository subscriptionRepository;
 
+    @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest createPaymentRequest) {
         UUID billId = createPaymentRequest.getBillId();
 
