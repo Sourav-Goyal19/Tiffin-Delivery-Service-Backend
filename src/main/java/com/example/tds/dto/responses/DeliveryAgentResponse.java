@@ -1,6 +1,6 @@
 package com.example.tds.dto.responses;
 
-import com.example.tds.enums.DeliveryAgentCurrentStatus;
+import com.example.tds.enums.DeliveryAgentStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +18,7 @@ public class DeliveryAgentResponse {
     private String name;
     private String mobileNo;
     private String fcmToken;
-    private DeliveryAgentCurrentStatus currentStatus;
+    private DeliveryAgentStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime lastActiveAt;
 

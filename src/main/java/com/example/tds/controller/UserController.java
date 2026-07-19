@@ -111,4 +111,17 @@ public class UserController {
                         .build()
         );
     }
+
+    @GetMapping("/{userId}/location")
+    public ResponseEntity<ApiResponse> getLocation(@PathVariable("userId") UUID userId) {
+        Map<String, Double> location = userService.handleGetLocation(userId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Location fetched successfully")
+                        .success(true)
+                        .data(Map.of("location", location))
+                        .build()
+        );
+    }
 }

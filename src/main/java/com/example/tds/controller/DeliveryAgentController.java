@@ -11,11 +11,17 @@ import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.entity.DeliveryAgentEntity;
 import com.example.tds.service.DeliveryAgentService;
 import com.example.tds.dto.responses.DeliveryAgentResponse;
+import com.example.tds.dto.responses.GoogleMapsRouteResponse;
+
+import org.springframework.validation.annotation.Validated;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/delivery-agents")
@@ -115,6 +121,24 @@ public class DeliveryAgentController {
                 ApiResponse.builder()
                         .message("Published successfully")
                         .success(true)
+                        .build()
+        );
+    }
+
+    @GetMapping("/route")
+    public ResponseEntity<ApiResponse> getRoute(
+            @RequestParam("startLng") @Min(-180) @Max(180) double startLng,
+            @RequestParam("startLat") @Min(-90) @Max(90) double startLat,
+            @RequestParam("endLng") @Min(-180) @Max(180) double endLng,
+            @RequestParam("endLat") @Min(-90) @Max(90) double endLat
+    ) {
+        GoogleMapsRouteResponse route = deliveryAgentService.getRoute(startLng, startLat, endLng, endLat);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Route fetched successfully")
+                        .success(true)
+                        .data(Map.of("route", route))
                         .build()
         );
     }

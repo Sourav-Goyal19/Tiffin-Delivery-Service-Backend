@@ -39,6 +39,9 @@ public class OrderEntity {
     @Column(name = "status", nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
 
+    @Column(name = "order_otp", nullable = false, length = 4)
+    private Integer orderOTP;
+
     @Column(name = "order_date", nullable = false)
     private LocalDate orderDate;
 

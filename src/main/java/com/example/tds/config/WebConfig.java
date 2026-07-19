@@ -32,7 +32,8 @@ public class WebConfig implements WebMvcConfigurer {
                                 "/api/users/otp/generate",
                                 "/api/users/otp/verify",
                                 "/api/users/signup",
-                                "/api/users/refresh"
+                                "/api/users/refresh",
+                                "/api/users/*/location"
                         )
                 );
 
@@ -46,7 +47,8 @@ public class WebConfig implements WebMvcConfigurer {
                                 "/api/chefs/otp/generate",
                                 "/api/chefs/otp/verify",
                                 "/api/chefs/signup",
-                                "/api/chefs/refresh"
+                                "/api/chefs/refresh",
+                                "/api/chefs/*/location"
                         )
                 );
 

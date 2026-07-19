@@ -158,4 +158,18 @@ public class ChefService {
 
         return chefMapper.toChefResponse(updatedChef);
     }
+
+    public Map<String, Double> handleGetLocation(UUID chefId) {
+        ChefEntity existingChef = chefRepository.findById(chefId)
+                .orElseThrow(()->new ResourceNotFoundException("Chef not found"));
+
+        if (existingChef.getLocation() == null) {
+            throw new ResourceNotFoundException("Location not found for chef");
+        }
+
+        return Map.of(
+                "longitude", existingChef.getLocation().getX(),
+                "latitude", existingChef.getLocation().getY()
+        );
+    }
 }

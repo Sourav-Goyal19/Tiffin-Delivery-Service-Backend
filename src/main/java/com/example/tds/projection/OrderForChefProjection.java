@@ -15,7 +15,7 @@ public interface OrderForChefProjection {
     UUID getDeliveryAgentId();
     String getDeliveryAgentName();
     String getDeliveryAgentMobileNo();
-    String getDeliveryAgentCurrentStatus();
+    String getDeliveryAgentStatus();
     LocalDateTime getDeliveryAgentCreatedAt();
     LocalDateTime getDeliveryAgentLastActiveAt();
     String getFromLocation();

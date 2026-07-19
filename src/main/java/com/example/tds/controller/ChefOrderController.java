@@ -28,7 +28,7 @@ import java.util.HashMap;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chefs")
-public class OrderController {
+public class ChefOrderController {
     private final OrderService orderService;
 
     @GetMapping("/{chefId}/orders/today")
@@ -79,6 +79,7 @@ public class OrderController {
                         .build()
         );
     }
+
     @PatchMapping("/{chefId}/orders/{orderId}/assign")
     public ResponseEntity<ApiResponse> assignDeliveryAgent(
             @PathVariable("chefId") UUID chefId,

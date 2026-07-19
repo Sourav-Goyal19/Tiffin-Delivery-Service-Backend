@@ -19,6 +19,8 @@ public class UserResponse {
     private String accessToken;
     private String refreshToken;
     private String address;
+    private Double longitude;
+    private Double latitude;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
