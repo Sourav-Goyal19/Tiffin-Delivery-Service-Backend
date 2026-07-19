@@ -23,9 +23,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import com.example.tds.dto.responses.GoogleMapsRouteResponse;
 
 import org.springframework.data.geo.*;
-import com.example.tds.enums.DeliveryAgentCurrentStatus;
+import com.example.tds.enums.DeliveryAgentStatus;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
 import org.springframework.data.redis.connection.RedisGeoCommands.GeoRadiusCommandArgs;
@@ -39,6 +40,7 @@ public class DeliveryAgentService {
     private final GeoOperations<String, UUID> geoOperations;
     private final DeliveryAgentRepository deliveryAgentRepository;
     private final StringRedisTemplate template;
+    private final GoogleMapsRoutingService googleMapsRoutingService;
 
     @Value("${order.channel.name}")
     private String orderChannelName;
@@ -176,9 +178,9 @@ public class DeliveryAgentService {
                 .map(result -> result.getContent().getName())
                 .toList();
 
-        return deliveryAgentRepository.findByDeliveryAgentIdInAndCurrentStatus(
+        return deliveryAgentRepository.findByDeliveryAgentIdInAndStatus(
                 deliveryAgentIds,
-                DeliveryAgentCurrentStatus.ACTIVE
+                DeliveryAgentStatus.ACTIVE
         );
     }
 
@@ -193,6 +195,10 @@ public class DeliveryAgentService {
 
     public void publishDeliveryRequest(UUID deliveryAgentId, UUID orderId) {
         String channelName = orderChannelName + "_" + orderId;
-        Long received = template.convertAndSend(channelName, "delivery_agent_" + deliveryAgentId);
+        template.convertAndSend(channelName, "delivery_agent_" + deliveryAgentId);
+    }
+
+    public GoogleMapsRouteResponse getRoute(double startLng, double startLat, double endLng, double endLat) {
+        return googleMapsRoutingService.getRoute(startLng, startLat, endLng, endLat);
     }
 }

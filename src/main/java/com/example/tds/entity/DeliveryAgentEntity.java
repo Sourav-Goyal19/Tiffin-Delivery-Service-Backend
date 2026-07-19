@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import org.locationtech.jts.geom.Point;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.CreationTimestamp;
-import com.example.tds.enums.DeliveryAgentCurrentStatus;
+import com.example.tds.enums.DeliveryAgentStatus;
 
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -33,9 +33,9 @@ public class DeliveryAgentEntity {
     @Column(name = "location", columnDefinition = "geography(Point, 4326)")
     private Point location;
 
-    @Column(name = "current_status", nullable = false)
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private DeliveryAgentCurrentStatus currentStatus = DeliveryAgentCurrentStatus.OFFLINE;
+    private DeliveryAgentStatus status = DeliveryAgentStatus.OFFLINE;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

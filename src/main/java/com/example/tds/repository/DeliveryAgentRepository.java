@@ -1,7 +1,7 @@
 package com.example.tds.repository;
 
 import com.example.tds.entity.DeliveryAgentEntity;
-import com.example.tds.enums.DeliveryAgentCurrentStatus;
+import com.example.tds.enums.DeliveryAgentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -12,5 +12,5 @@ public interface DeliveryAgentRepository extends JpaRepository<DeliveryAgentEnti
     Optional<DeliveryAgentEntity> findByMobileNo(String mobileNo);
     Optional<DeliveryAgentEntity> findByDeliveryAgentId(UUID deliveryAgentId);
 
-    List<DeliveryAgentEntity> findByDeliveryAgentIdInAndCurrentStatus(List<UUID> deliveryAgentIds, DeliveryAgentCurrentStatus currentStatus);
+    List<DeliveryAgentEntity> findByDeliveryAgentIdInAndStatus(List<UUID> deliveryAgentIds, DeliveryAgentStatus status);
 }

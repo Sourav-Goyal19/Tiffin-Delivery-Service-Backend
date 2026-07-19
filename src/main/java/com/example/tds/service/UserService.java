@@ -144,4 +144,18 @@ public class UserService {
 
         return userMapper.toUserResponse(updatedUser);
     }
+
+    public Map<String, Double> handleGetLocation(UUID userId){
+        UserEntity existingUser = userRepository.findById(userId)
+                .orElseThrow(()->new ResourceNotFoundException("User not found"));
+
+        if (existingUser.getLocation() == null) {
+            throw new ResourceNotFoundException("Location not found for user");
+        }
+
+        return Map.of(
+                "longitude", existingUser.getLocation().getX(),
+                "latitude", existingUser.getLocation().getY()
+        );
+    }
 }

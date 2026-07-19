@@ -1,6 +1,7 @@
 package com.example.tds.repository;
 
 import com.example.tds.entity.OrderEntity;
+import com.example.tds.projection.OrderForDeliveryAgentProjection;
 import org.springframework.data.jpa.repository.Query;
 import com.example.tds.projection.OrderForChefProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +14,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     Optional<OrderEntity> findByOrderId(UUID orderId);
 
     @Query(nativeQuery = true, value = """
-        SELECT 
+        SELECT
             o.order_id            AS "orderId",
             o.delivery_agent_id   AS "deliveryAgentId",
             o.from_location       AS "fromLocation",
@@ -22,13 +23,13 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             o.order_date          AS "orderDate",
             o.created_at          AS "createdAt",
             o.updated_at          AS "updatedAt",
-            
+
             da.name               AS "deliveryAgentName",
             da.mobile_no          AS "deliveryAgentMobileNo",
-            da.current_status     AS "deliveryAgentCurrentStatus",
+            da.status             AS "deliveryAgentStatus",
             da.created_at         AS "deliveryAgentCreatedAt",
             da.last_active_at     AS "deliveryAgentLastActiveAt",
-                
+
             s.subscription_id     AS "subscriptionId",
             s.delivery_type       AS "subscriptionDeliveryType",
             s.plan_type           AS "subscriptionPlanType",
@@ -44,7 +45,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             u.address             AS "userAddress",
             u.created_at           AS "userCreatedAt",
             u.updated_at           AS "userUpdatedAt",
-            
+
             m.menu_id             AS "menuId",
             m.items               AS "menuItems",
             m.chef_id             AS "menuChefId",
@@ -68,11 +69,101 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
         JOIN menus m
             ON m.chef_id = c.chef_id AND m.is_active = TRUE
         WHERE
-            s.is_active = TRUE AND 
+            s.is_active = TRUE AND
             c.chef_id = :chefId AND
             o.order_date::date = CURRENT_DATE AND
             m.week_day = UPPER(TO_CHAR(CURRENT_DATE, 'FMDay')) AND
             m.meal_type = mp.meal_type;
     """)
     List<OrderForChefProjection> findByChefId(UUID chefId);
+
+    @Query(nativeQuery = true, value = """
+        SELECT
+            o.order_id                   AS "orderId",
+            o.subscription_id            AS "orderSubscriptionId",
+            o.delivery_agent_id          AS "orderDeliveryAgentId",
+            o.from_location              AS "orderFromLocation",
+            o.to_location                AS "orderToLocation",
+            o.status                     AS "orderStatus",
+            o.order_date                 AS "orderDate",
+            o.created_at                 AS "orderCreatedAt",
+            o.updated_at                 AS "orderUpdatedAt",
+    
+            u.user_id                    AS "userId",
+            u.name                       AS "userName",
+            u.mobile_no                  AS "userMobileNo",
+            u.address                    AS "userAddress",
+            ST_X(u.location::geometry)   AS "userLongitude",
+            ST_Y(u.location::geometry)   AS "userLatitude",
+            u.created_at                 AS "userCreatedAt",
+            u.updated_at                 AS "userUpdatedAt",
+    
+            c.chef_id                    AS "chefId",
+            c.name                       AS "chefName",
+            c.mobile_no                  AS "chefMobileNo",
+            c.address                    AS "chefAddress",
+            c.rating                     AS "chefRating",
+            ST_X(c.location::geometry)   AS "chefLongitude",
+            ST_Y(c.location::geometry)   AS "chefLatitude",
+            c.created_at                 AS "chefCreatedAt",
+            c.updated_at                 AS "chefUpdatedAt"
+        FROM orders o
+        JOIN subscriptions s
+            ON s.subscription_id = o.subscription_id
+        JOIN meal_plans mp
+            ON mp.meal_plan_id = s.meal_plan_id
+        JOIN chefs c
+            ON c.chef_id = mp.chef_id
+        JOIN users u
+            ON u.user_id = s.user_id
+        WHERE
+            o.order_id = :orderId AND
+            o.delivery_agent_id = :deliveryAgentId;
+    """)
+    Optional<OrderForDeliveryAgentProjection> getOrderByOrderIdAndDeliveryAgentId(UUID orderId, UUID deliveryAgentId);
+
+    @Query(nativeQuery = true, value = """
+        SELECT
+            o.order_id                   AS "orderId",
+            o.subscription_id            AS "orderSubscriptionId",
+            o.delivery_agent_id          AS "orderDeliveryAgentId",
+            o.from_location              AS "orderFromLocation",
+            o.to_location                AS "orderToLocation",
+            o.status                     AS "orderStatus",
+            o.order_date                 AS "orderDate",
+            o.created_at                 AS "orderCreatedAt",
+            o.updated_at                 AS "orderUpdatedAt",
+    
+            u.user_id                    AS "userId",
+            u.name                       AS "userName",
+            u.mobile_no                  AS "userMobileNo",
+            u.address                    AS "userAddress",
+            ST_X(u.location::geometry)   AS "userLongitude",
+            ST_Y(u.location::geometry)   AS "userLatitude",
+            u.created_at                 AS "userCreatedAt",
+            u.updated_at                 AS "userUpdatedAt",
+    
+            c.chef_id                    AS "chefId",
+            c.name                       AS "chefName",
+            c.mobile_no                  AS "chefMobileNo",
+            c.address                    AS "chefAddress",
+            c.rating                     AS "chefRating",
+            ST_X(c.location::geometry)   AS "chefLongitude",
+            ST_Y(c.location::geometry)   AS "chefLatitude",
+            c.created_at                 AS "chefCreatedAt",
+            c.updated_at                 AS "chefUpdatedAt"
+        FROM orders o
+        JOIN subscriptions s
+            ON s.subscription_id = o.subscription_id
+        JOIN meal_plans mp
+            ON mp.meal_plan_id = s.meal_plan_id
+        JOIN chefs c
+            ON c.chef_id = mp.chef_id
+        JOIN users u
+            ON u.user_id = s.user_id
+        WHERE
+            o.delivery_agent_id = :deliveryAgentId
+        ORDER BY "orderUpdatedAt" DESC;
+    """)
+    List<OrderForDeliveryAgentProjection> getOrdersByDeliveryAgentId(UUID deliveryAgentId);
 }

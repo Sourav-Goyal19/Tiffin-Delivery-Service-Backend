@@ -1,6 +1,8 @@
 package com.example.tds.service;
 
 import com.example.tds.entity.*;
+import com.example.tds.projection.OrderForDeliveryAgentProjection;
+import com.example.tds.repository.DeliveryAgentRepository;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import com.example.tds.dto.responses.*;
@@ -9,7 +11,7 @@ import com.example.tds.mapper.OrderMapper;
 import org.springframework.stereotype.Service;
 import com.example.tds.mapper.DeliveryAgentMapper;
 import com.example.tds.repository.OrderRepository;
-import com.example.tds.enums.DeliveryAgentCurrentStatus;
+import com.example.tds.enums.DeliveryAgentStatus;
 import com.example.tds.projection.OrderForChefProjection;
 import com.example.tds.repository.SubscriptionRepository;
 import com.example.tds.exception.ResourceNotFoundException;
@@ -29,6 +31,7 @@ public class OrderService {
     private final DeliveryService deliveryService;
     private final DeliveryAgentMapper agentMapper;
     private final SubscriptionRepository subscriptionRepository;
+    private final DeliveryAgentRepository deliveryAgentRepository;
 
     @Transactional
     public void createOrder(UUID subscriptionId){
@@ -121,7 +124,7 @@ public class OrderService {
                         .deliveryAgentId(proj.getDeliveryAgentId())
                         .name(proj.getDeliveryAgentName())
                         .mobileNo(proj.getDeliveryAgentMobileNo())
-                        .currentStatus(proj.getDeliveryAgentCurrentStatus() != null ? DeliveryAgentCurrentStatus.valueOf(proj.getDeliveryAgentCurrentStatus()) : null)
+                        .status(proj.getDeliveryAgentStatus() != null ? DeliveryAgentStatus.valueOf(proj.getDeliveryAgentStatus()) : null)
                         .createdAt(proj.getDeliveryAgentCreatedAt())
                         .lastActiveAt(proj.getDeliveryAgentLastActiveAt())
                         .build();
@@ -152,16 +155,73 @@ public class OrderService {
 
         DeliveryAgentEntity deliveryAgent = deliveryService.getDeliveryAgent(order);
 
-        log.info("Found deliveryAgent {}", deliveryAgent.getDeliveryAgentId());
-
         order.setDeliveryAgent(deliveryAgent);
         order.setFromLocation(chef.getAddress());
         order.setToLocation(user.getAddress());
         order.setStatus(OrderStatus.ASSIGNED);
 
+        deliveryAgent.setStatus(DeliveryAgentStatus.BUSY);
+
         orderRepository.save(order);
+        deliveryAgentRepository.save(deliveryAgent);
 
         return agentMapper.toDeliveryAgentResponse(deliveryAgent);
+    }
+
+    public OrderForDeliveryAgentResponse getOrderForDeliveryAgent(UUID deliveryAgentId, UUID orderId){
+        OrderForDeliveryAgentProjection proj = orderRepository.getOrderByOrderIdAndDeliveryAgentId(orderId, deliveryAgentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        return mapToOrderForDeliveryAgentResponse(proj);
+    }
+
+    public List<OrderForDeliveryAgentResponse> getOrdersForDeliveryAgent(UUID deliveryAgentId){
+        List<OrderForDeliveryAgentProjection> projections = orderRepository.getOrdersByDeliveryAgentId(deliveryAgentId);
+
+        return projections.stream().map(this::mapToOrderForDeliveryAgentResponse).toList();
+    }
+
+    private OrderForDeliveryAgentResponse mapToOrderForDeliveryAgentResponse(OrderForDeliveryAgentProjection proj) {
+        OrderResponse order = OrderResponse.builder()
+                .orderId(proj.getOrderId())
+                .subscriptionId(proj.getOrderSubscriptionId())
+                .deliveryAgentId(proj.getOrderDeliveryAgentId())
+                .fromLocation(proj.getOrderFromLocation())
+                .toLocation(proj.getOrderToLocation())
+                .status(proj.getOrderStatus())
+                .orderDate(proj.getOrderDate())
+                .createdAt(proj.getOrderCreatedAt())
+                .updatedAt(proj.getOrderUpdatedAt())
+                .build();
+
+        UserResponse user = UserResponse.builder()
+                .id(proj.getUserId())
+                .name(proj.getUserName())
+                .mobileNo(proj.getUserMobileNo())
+                .address(proj.getUserAddress())
+                .longitude(proj.getUserLongitude())
+                .latitude(proj.getUserLatitude())
+                .createdAt(proj.getUserCreatedAt())
+                .updatedAt(proj.getUserUpdatedAt())
+                .build();
+
+        ChefResponse chef = ChefResponse.builder()
+                .chefId(proj.getChefId())
+                .name(proj.getChefName())
+                .mobileNo(proj.getChefMobileNo())
+                .address(proj.getChefAddress())
+                .rating(proj.getChefRating())
+                .longitude(proj.getChefLongitude())
+                .latitude(proj.getChefLatitude())
+                .createdAt(proj.getChefCreatedAt())
+                .updatedAt(proj.getChefUpdatedAt())
+                .build();
+
+        return OrderForDeliveryAgentResponse.builder()
+                .order(order)
+                .user(user)
+                .chef(chef)
+                .build();
     }
 
     @Transactional

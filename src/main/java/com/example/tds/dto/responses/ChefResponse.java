@@ -19,6 +19,8 @@ public class ChefResponse {
     private String mobileNo;
     private String avatarUrl;
     private Double rating;
+    private Double longitude;
+    private Double latitude;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

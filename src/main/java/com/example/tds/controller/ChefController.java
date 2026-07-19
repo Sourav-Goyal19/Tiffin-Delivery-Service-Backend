@@ -123,4 +123,17 @@ public class ChefController {
                         .build()
         );
     }
+
+    @GetMapping("/{chefId}/location")
+    public ResponseEntity<ApiResponse> getLocation(@PathVariable("chefId") UUID chefId) {
+        Map<String, Double> location = chefService.handleGetLocation(chefId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Location fetched successfully")
+                        .success(true)
+                        .data(Map.of("location", location))
+                        .build()
+        );
+    }
 }

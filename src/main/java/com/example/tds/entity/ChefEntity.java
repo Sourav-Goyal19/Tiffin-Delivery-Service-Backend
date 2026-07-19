@@ -26,7 +26,7 @@ public class ChefEntity {
     @Column(name = "mobile_no", nullable = false, length = 10, unique = true)
     private String mobileNo;
 
-    @Column(name = "otp", length = 6)
+    @Column(name = "otp", length = 4)
     private Integer otp;
 
     @Column(name = "is_verified")

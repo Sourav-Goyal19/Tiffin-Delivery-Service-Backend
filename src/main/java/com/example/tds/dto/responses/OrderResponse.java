@@ -22,6 +22,7 @@ public class OrderResponse {
     private String toLocation;
     private OrderStatus status;
     private LocalDate orderDate;
+    private Integer orderOTP;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

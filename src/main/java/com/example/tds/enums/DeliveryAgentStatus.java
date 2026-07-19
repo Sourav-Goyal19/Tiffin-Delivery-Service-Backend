@@ -1,5 +1,5 @@
 package com.example.tds.enums;
 
-public enum DeliveryAgentCurrentStatus {
+public enum DeliveryAgentStatus {
     ACTIVE, BUSY, OFFLINE
 }

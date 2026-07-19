@@ -12,5 +12,5 @@ import java.util.Map;
 public class ApiResponse {
     private String message;
     private boolean success;
-    private Map<String, Object> data;
+    private Object data;
 }
