@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 @Builder
 public class OrderForDeliveryAgentResponse {
-    private OrderResponse order;
+    private DeliveryAgentOrderResponse order;
     private UserResponse user;
     private ChefResponse chef;
 }

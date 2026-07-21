@@ -1,21 +1,22 @@
 package com.example.tds.service;
 
 import com.example.tds.entity.*;
-import com.example.tds.projection.OrderForDeliveryAgentProjection;
-import com.example.tds.repository.DeliveryAgentRepository;
 import lombok.extern.slf4j.Slf4j;
+import com.example.tds.repository.*;
 import lombok.RequiredArgsConstructor;
 import com.example.tds.dto.responses.*;
 import com.example.tds.enums.OrderStatus;
+import com.example.tds.enums.DeliveryType;
 import com.example.tds.mapper.OrderMapper;
 import org.springframework.stereotype.Service;
-import com.example.tds.mapper.DeliveryAgentMapper;
-import com.example.tds.repository.OrderRepository;
 import com.example.tds.enums.DeliveryAgentStatus;
+import com.example.tds.mapper.DeliveryAgentMapper;
+import com.example.tds.exception.BadRequestException;
 import com.example.tds.projection.OrderForChefProjection;
-import com.example.tds.repository.SubscriptionRepository;
 import com.example.tds.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.tds.dto.requests.orders.OrderDeliveredRequest;
+import com.example.tds.projection.OrderForDeliveryAgentProjection;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +31,10 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final DeliveryService deliveryService;
     private final DeliveryAgentMapper agentMapper;
+    private final ChefPaymentRepository chefPaymentRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final DeliveryAgentRepository deliveryAgentRepository;
+    private final DeliveryPaymentRepository deliveryPaymentRepository;
 
     @Transactional
     public void createOrder(UUID subscriptionId){
@@ -75,7 +78,7 @@ public class OrderService {
         }
 
         List<OrderWithDetailsResponse> mappedOrders = orders.stream().map(proj -> {
-            OrderResponse order = OrderResponse.builder()
+            ChefOrderResponse order = ChefOrderResponse.builder()
                     .orderId(proj.getOrderId())
                     .deliveryAgentId(proj.getDeliveryAgentId())
                     .fromLocation(proj.getFromLocation())
@@ -175,14 +178,16 @@ public class OrderService {
         return mapToOrderForDeliveryAgentResponse(proj);
     }
 
-    public List<OrderForDeliveryAgentResponse> getOrdersForDeliveryAgent(UUID deliveryAgentId){
-        List<OrderForDeliveryAgentProjection> projections = orderRepository.getOrdersByDeliveryAgentId(deliveryAgentId);
+    public List<OrderForDeliveryAgentResponse> getOrdersForDeliveryAgent(UUID deliveryAgentId, Boolean activeOrders){
+        List<OrderForDeliveryAgentProjection> projections = activeOrders != null && activeOrders
+                ? orderRepository.getActiveOrdersByDeliveryAgentId(deliveryAgentId)
+                : orderRepository.getOrdersByDeliveryAgentId(deliveryAgentId);
 
         return projections.stream().map(this::mapToOrderForDeliveryAgentResponse).toList();
     }
 
     private OrderForDeliveryAgentResponse mapToOrderForDeliveryAgentResponse(OrderForDeliveryAgentProjection proj) {
-        OrderResponse order = OrderResponse.builder()
+        DeliveryAgentOrderResponse order = DeliveryAgentOrderResponse.builder()
                 .orderId(proj.getOrderId())
                 .subscriptionId(proj.getOrderSubscriptionId())
                 .deliveryAgentId(proj.getOrderDeliveryAgentId())
@@ -190,6 +195,7 @@ public class OrderService {
                 .toLocation(proj.getOrderToLocation())
                 .status(proj.getOrderStatus())
                 .orderDate(proj.getOrderDate())
+                .deliveryAgentFee(proj.getOrderDeliveryAgentFee())
                 .createdAt(proj.getOrderCreatedAt())
                 .updatedAt(proj.getOrderUpdatedAt())
                 .build();
@@ -233,6 +239,85 @@ public class OrderService {
         order = orderRepository.save(order);
 
         return orderMapper.toOrderResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse handleOrderDelivery(UUID orderId, OrderDeliveredRequest request) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        validateOrderDelivery(order, request.getOrderOtp());
+
+        order.setStatus(OrderStatus.DELIVERED);
+
+        if (order.getDeliveryAgent() != null) {
+            DeliveryAgentEntity agent = order.getDeliveryAgent();
+            agent.setStatus(DeliveryAgentStatus.ACTIVE);
+            deliveryAgentRepository.save(agent);
+        }
+
+        order = orderRepository.save(order);
+
+        processPayments(order);
+
+        return orderMapper.toOrderResponse(order);
+    }
+
+    private void validateOrderDelivery(OrderEntity order, int providedOtp) {
+        if (order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new BadRequestException("Order has already processed or cancelled");
+        }
+
+        if (providedOtp != order.getOrderOTP()) {
+            throw new BadRequestException("Invalid order OTP");
+        }
+
+        SubscriptionEntity subscription = order.getSubscription();
+        if (subscription.getDeliveryType() == DeliveryType.DELIVERY && order.getStatus() != OrderStatus.PICKED_UP) {
+            throw new BadRequestException("Order was never picked up");
+        }
+        
+        if (subscription.getDeliveryType() == DeliveryType.PICKUP && order.getStatus() != OrderStatus.READY) {
+            throw new BadRequestException("Order is not ready for pickup");
+        }
+    }
+
+    private void processPayments(OrderEntity order) {
+        SubscriptionEntity subscription = order.getSubscription();
+
+        if (subscription.getDeliveryType() == DeliveryType.DELIVERY) {
+            processDeliveryPayment(order, subscription.getDeliveryAgentFee());
+        }
+
+        processChefPayment(order, subscription);
+    }
+
+    private void processDeliveryPayment(OrderEntity order, double deliveryAgentFee) {
+        DeliveryPaymentEntity deliveryPayment = new DeliveryPaymentEntity();
+        deliveryPayment.setDeliveryAgent(order.getDeliveryAgent());
+        deliveryPayment.setOrder(order);
+        deliveryPayment.setAmount(deliveryAgentFee);
+
+        deliveryPaymentRepository.save(deliveryPayment);
+    }
+
+    private void processChefPayment(OrderEntity order, SubscriptionEntity subscription) {
+        double chefFee = calculateChefFee(subscription);
+
+        ChefPaymentEntity chefPayment = new ChefPaymentEntity();
+        chefPayment.setChef(subscription.getMealPlan().getChef());
+        chefPayment.setOrder(order);
+        chefPayment.setAmount(chefFee);
+
+        chefPaymentRepository.save(chefPayment);
+    }
+
+    private double calculateChefFee(SubscriptionEntity subscription) {
+        return switch (subscription.getPlanType()) {
+            case WEEKLY -> subscription.getPrice() / 7;
+            case MONTHLY -> subscription.getPrice() / 30;
+            default -> 0d;
+        };
     }
 
     @Transactional
