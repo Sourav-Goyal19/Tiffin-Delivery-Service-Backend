@@ -14,6 +14,7 @@ public interface OrderForDeliveryAgentProjection {
     String getOrderToLocation();
     OrderStatus getOrderStatus();
     LocalDate getOrderDate();
+    Double getOrderDeliveryAgentFee();
     LocalDateTime getOrderCreatedAt();
     LocalDateTime getOrderUpdatedAt();
 

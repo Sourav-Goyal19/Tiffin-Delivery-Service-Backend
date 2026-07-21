@@ -3,14 +3,15 @@ package com.example.tds.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import com.example.tds.enums.OrderStatus;
 import org.springframework.http.HttpStatus;
 import com.example.tds.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import com.example.tds.dto.responses.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 import com.example.tds.dto.responses.OrderResponse;
+import com.example.tds.dto.requests.orders.OrderDeliveredRequest;
 import com.example.tds.dto.responses.OrderForDeliveryAgentResponse;
-import com.example.tds.dto.requests.orders.UpdateOrderStatusRequest;
 
 import java.util.Map;
 import java.util.UUID;
@@ -41,9 +42,10 @@ public class DeliveryAgentOrderController {
 
     @GetMapping("/{agentId}/orders")
     public ResponseEntity<ApiResponse> getOrders(
-            @PathVariable("agentId") UUID agentId
+            @PathVariable("agentId") UUID agentId,
+            @RequestParam(value = "active", required = false, defaultValue = "false") Boolean active
     ){
-        List<OrderForDeliveryAgentResponse> orders = orderService.getOrdersForDeliveryAgent(agentId);
+        List<OrderForDeliveryAgentResponse> orders = orderService.getOrdersForDeliveryAgent(agentId, active);
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
@@ -54,13 +56,29 @@ public class DeliveryAgentOrderController {
         );
     }
 
-    @PatchMapping("/{agentId}/orders/{orderId}/status")
-    public ResponseEntity<ApiResponse> updateOrderStatus(
+    @PatchMapping("/{agentId}/orders/{orderId}/status/pickup")
+    public ResponseEntity<ApiResponse> updateOrderStatusToPickup(
+            @PathVariable("agentId") UUID agentId,
+            @PathVariable("orderId") UUID orderId) {
+
+        OrderResponse response = orderService.updateOrderStatus(orderId, OrderStatus.PICKED_UP);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Order status updated successfully")
+                        .success(true)
+                        .data(Map.of("order", response))
+                        .build()
+        );
+    }
+
+    @PatchMapping("/{agentId}/orders/{orderId}/status/delivered")
+    public ResponseEntity<ApiResponse> handleOrderDelivered(
             @PathVariable("agentId") UUID agentId,
             @PathVariable("orderId") UUID orderId,
-            @RequestBody @Valid UpdateOrderStatusRequest request) {
+            @RequestBody @Valid OrderDeliveredRequest request) {
 
-        OrderResponse response = orderService.updateOrderStatus(orderId, request.getStatus());
+        OrderResponse response = orderService.handleOrderDelivery(orderId, request);
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()

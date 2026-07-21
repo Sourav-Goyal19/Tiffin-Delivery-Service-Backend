@@ -11,7 +11,6 @@ import java.util.UUID;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
-    Optional<OrderEntity> findByOrderId(UUID orderId);
 
     @Query(nativeQuery = true, value = """
         SELECT
@@ -86,6 +85,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             o.to_location                AS "orderToLocation",
             o.status                     AS "orderStatus",
             o.order_date                 AS "orderDate",
+            s.delivery_agent_fee         AS "orderDeliveryAgentFee",
             o.created_at                 AS "orderCreatedAt",
             o.updated_at                 AS "orderUpdatedAt",
     
@@ -131,6 +131,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             o.to_location                AS "orderToLocation",
             o.status                     AS "orderStatus",
             o.order_date                 AS "orderDate",
+            s.delivery_agent_fee         AS "orderDeliveryAgentFee",
             o.created_at                 AS "orderCreatedAt",
             o.updated_at                 AS "orderUpdatedAt",
     
@@ -162,8 +163,55 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
         JOIN users u
             ON u.user_id = s.user_id
         WHERE
-            o.delivery_agent_id = :deliveryAgentId
+            o.delivery_agent_id = :deliveryAgentId AND o.status <> 'CANCELLED'
         ORDER BY "orderUpdatedAt" DESC;
     """)
     List<OrderForDeliveryAgentProjection> getOrdersByDeliveryAgentId(UUID deliveryAgentId);
+
+    @Query(nativeQuery = true, value = """
+        SELECT
+            o.order_id                   AS "orderId",
+            o.subscription_id            AS "orderSubscriptionId",
+            o.delivery_agent_id          AS "orderDeliveryAgentId",
+            o.from_location              AS "orderFromLocation",
+            o.to_location                AS "orderToLocation",
+            o.status                     AS "orderStatus",
+            o.order_date                 AS "orderDate",
+            s.delivery_agent_fee         AS "orderDeliveryAgentFee",
+            o.created_at                 AS "orderCreatedAt",
+            o.updated_at                 AS "orderUpdatedAt",
+    
+            u.user_id                    AS "userId",
+            u.name                       AS "userName",
+            u.mobile_no                  AS "userMobileNo",
+            u.address                    AS "userAddress",
+            ST_X(u.location::geometry)   AS "userLongitude",
+            ST_Y(u.location::geometry)   AS "userLatitude",
+            u.created_at                 AS "userCreatedAt",
+            u.updated_at                 AS "userUpdatedAt",
+    
+            c.chef_id                    AS "chefId",
+            c.name                       AS "chefName",
+            c.mobile_no                  AS "chefMobileNo",
+            c.address                    AS "chefAddress",
+            c.rating                     AS "chefRating",
+            ST_X(c.location::geometry)   AS "chefLongitude",
+            ST_Y(c.location::geometry)   AS "chefLatitude",
+            c.created_at                 AS "chefCreatedAt",
+            c.updated_at                 AS "chefUpdatedAt"
+        FROM orders o
+        JOIN subscriptions s
+            ON s.subscription_id = o.subscription_id
+        JOIN meal_plans mp
+            ON mp.meal_plan_id = s.meal_plan_id
+        JOIN chefs c
+            ON c.chef_id = mp.chef_id
+        JOIN users u
+            ON u.user_id = s.user_id
+        WHERE
+            o.delivery_agent_id = :deliveryAgentId AND
+            o.status IN ('ASSIGNED', 'PICKED_UP')
+        ORDER BY "orderUpdatedAt" DESC;
+        """)
+    List<OrderForDeliveryAgentProjection> getActiveOrdersByDeliveryAgentId(UUID deliveryAgentId);
 }
