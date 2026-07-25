@@ -12,11 +12,14 @@ import org.springframework.stereotype.Service;
 import com.example.tds.enums.DeliveryAgentStatus;
 import com.example.tds.mapper.DeliveryAgentMapper;
 import com.example.tds.exception.BadRequestException;
+import com.example.tds.enums.WeekDay;
+import com.example.tds.projection.OrderForUserProjection;
 import com.example.tds.projection.OrderForChefProjection;
 import com.example.tds.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.tds.dto.requests.orders.OrderDeliveredRequest;
 import com.example.tds.projection.OrderForDeliveryAgentProjection;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +38,7 @@ public class OrderService {
     private final SubscriptionRepository subscriptionRepository;
     private final DeliveryAgentRepository deliveryAgentRepository;
     private final DeliveryPaymentRepository deliveryPaymentRepository;
+    private final StringRedisTemplate template;
 
     @Transactional
     public void createOrder(UUID subscriptionId){
@@ -230,6 +234,99 @@ public class OrderService {
                 .build();
     }
 
+    public OrderForUserResponse getOrderForUser(UUID userId, UUID orderId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                
+        WeekDay weekDay = WeekDay.valueOf(order.getOrderDate().getDayOfWeek().name().toUpperCase());
+        
+        OrderForUserProjection proj = orderRepository.getOrderByUserIdAndOrderId(userId, orderId, weekDay.name())
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        return mapToOrderForUserResponse(proj);
+    }
+
+    public List<OrderForUserResponse> getOrdersForUser(UUID userId, LocalDate date) {
+        List<OrderForUserProjection> projections;
+        
+        if (date != null) {
+            WeekDay weekDay = WeekDay.valueOf(date.getDayOfWeek().name().toUpperCase());
+            projections = orderRepository.getOrdersByUserIdAndDate(userId, date, weekDay.name());
+        } else {
+            projections = orderRepository.getOrdersByUserId(userId);
+        }
+        
+        return projections.stream().map(this::mapToOrderForUserResponse).toList();
+    }
+
+    private OrderForUserResponse mapToOrderForUserResponse(OrderForUserProjection proj) {
+        CustomerOrderResponse order = CustomerOrderResponse.builder()
+                .orderId(proj.getOrderId())
+                .subscriptionId(proj.getOrderSubscriptionId())
+                .deliveryAgentId(proj.getOrderDeliveryAgentId())
+                .fromLocation(proj.getOrderFromLocation())
+                .toLocation(proj.getOrderToLocation())
+                .status(proj.getOrderStatus())
+                .orderDate(proj.getOrderDate())
+                .orderOtp(proj.getOrderOtp())
+                .createdAt(proj.getOrderCreatedAt())
+                .updatedAt(proj.getOrderUpdatedAt())
+                .build();
+
+        DeliveryAgentResponse deliveryAgent = null;
+        if (proj.getOrderDeliveryAgentId() != null) {
+            deliveryAgent = DeliveryAgentResponse.builder()
+                    .deliveryAgentId(proj.getOrderDeliveryAgentId())
+                    .name(proj.getDeliveryAgentName())
+                    .mobileNo(proj.getDeliveryAgentMobileNo())
+                    .status(proj.getDeliveryAgentStatus())
+                    .createdAt(proj.getDeliveryAgentCreatedAt())
+                    .lastActiveAt(proj.getDeliveryAgentLastActiveAt())
+                    .build();
+        }
+
+        SubscriptionResponse subscription = SubscriptionResponse.builder()
+                .subscriptionId(proj.getSubscriptionId())
+                .deliveryType(proj.getSubscriptionDeliveryType())
+                .planType(proj.getSubscriptionPlanType())
+                .isActive(proj.getSubscriptionIsActive())
+                .price(proj.getSubscriptionPrice())
+                .startDate(proj.getSubscriptionStartDate())
+                .endDate(proj.getSubscriptionEndData())
+                .createdAt(proj.getSubscriptionCreatedAt())
+                .updatedAt(proj.getSubscriptionUpdatedAt())
+                .build();
+
+        ChefResponse chef = ChefResponse.builder()
+                .chefId(proj.getChefId())
+                .name(proj.getChefName())
+                .address(proj.getChefAddress())
+                .rating(proj.getChefRating())
+                .createdAt(proj.getChefCreatedAt())
+                .updatedAt(proj.getChefUpdatedAt())
+                .build();
+
+        MenuResponse menu = MenuResponse.builder()
+                .menuId(proj.getMenuId())
+                .weekDay(proj.getMenuWeekDay())
+                .mealType(proj.getMenuMealType())
+                .isActive(proj.getMenuIsActive())
+                .chefId(proj.getMenuChefId())
+                .thumbnailUrl(proj.getMenuThumbnailUrl())
+                .createdAt(proj.getMenuCreatedAt())
+                .updatedAt(proj.getMenuUpdatedAt())
+                .items(proj.getMenuItems() != null ? java.util.Arrays.asList(proj.getMenuItems().replace("{", "").replace("}", "").split(",")) : null)
+                .build();
+
+        return OrderForUserResponse.builder()
+                .order(order)
+                .deliveryAgent(deliveryAgent)
+                .subscription(subscription)
+                .chef(chef)
+                .menu(menu)
+                .build();
+    }
+
     @Transactional
     public OrderResponse updateOrderStatus(UUID orderId, OrderStatus status) {
         OrderEntity order = orderRepository.findById(orderId)
@@ -237,6 +334,10 @@ public class OrderService {
 
         order.setStatus(status);
         order = orderRepository.save(order);
+
+        if ((status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED) && order.getDeliveryAgent() != null) {
+            template.convertAndSend(DeliveryAgentService.AGENT_LOCATION_CHANNEL_PREFIX + order.getDeliveryAgent().getDeliveryAgentId(), DeliveryAgentService.CLOSE_CONNECTION_MESSAGE_PREFIX + order.getOrderId());
+        }
 
         return orderMapper.toOrderResponse(order);
     }
@@ -254,6 +355,8 @@ public class OrderService {
             DeliveryAgentEntity agent = order.getDeliveryAgent();
             agent.setStatus(DeliveryAgentStatus.ACTIVE);
             deliveryAgentRepository.save(agent);
+            
+            template.convertAndSend(DeliveryAgentService.AGENT_LOCATION_CHANNEL_PREFIX + agent.getDeliveryAgentId(), DeliveryAgentService.CLOSE_CONNECTION_MESSAGE_PREFIX + order.getOrderId());
         }
 
         order = orderRepository.save(order);
@@ -268,7 +371,7 @@ public class OrderService {
             throw new BadRequestException("Order has already processed or cancelled");
         }
 
-        if (providedOtp != order.getOrderOTP()) {
+        if (providedOtp != order.getOrderOtp()) {
             throw new BadRequestException("Invalid order OTP");
         }
 
@@ -328,7 +431,12 @@ public class OrderService {
             throw new ResourceNotFoundException("No orders found for the given IDs");
         }
 
-        orders.forEach(order -> order.setStatus(status));
+        orders.forEach(order -> {
+            order.setStatus(status);
+            if ((status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED) && order.getDeliveryAgent() != null) {
+                template.convertAndSend(DeliveryAgentService.AGENT_LOCATION_CHANNEL_PREFIX + order.getDeliveryAgent().getDeliveryAgentId(), DeliveryAgentService.CLOSE_CONNECTION_MESSAGE_PREFIX + order.getOrderId());
+            }
+        });
         orders = orderRepository.saveAll(orders);
 
         return orders.stream().map(orderMapper::toOrderResponse).toList();
