@@ -4,12 +4,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @Builder
 public class OrderForChefResponse {
-    private List<OrderWithDetailsResponse> orders;
+    private MenuResponse menu;
+    private UserResponse user;
+    private ChefOrderResponse order;
+    private SubscriptionResponse subscription;
+    private DeliveryAgentResponse deliveryAgent;
 }
-

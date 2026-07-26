@@ -20,7 +20,7 @@ public interface OrderForUserProjection {
     String getOrderToLocation();
     OrderStatus getOrderStatus();
     LocalDate getOrderDate();
-    Integer getOrderOtp();
+    Integer getDropOtp();
     LocalDateTime getOrderCreatedAt();
     LocalDateTime getOrderUpdatedAt();
 

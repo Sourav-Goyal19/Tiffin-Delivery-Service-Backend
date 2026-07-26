@@ -58,7 +58,7 @@ public class DeliveryService {
         return fee * 10.0;
     }
 
-    public DeliveryAgentEntity getDeliveryAgent(OrderEntity order) {
+    public DeliveryAgentEntity getDeliveryAgent(OrderEntity order, UUID excludeAgentId) {
         int minimumKm = 1;
         int maximumKm = 3;
 
@@ -75,8 +75,14 @@ public class DeliveryService {
 
         // :-: Finds delivery agents under specific the radius :-:
         for (int i = minimumKm; i <= maximumKm; i++) {
-            log.info("Finding nearby delivery agent under {}km now", i);
+
             List<DeliveryAgentEntity> deliveryAgents = deliveryAgentService.findNearbyActiveAgents(searchPoint, i);
+
+            if (excludeAgentId != null) {
+                deliveryAgents = deliveryAgents.stream()
+                        .filter(agent -> !agent.getDeliveryAgentId().equals(excludeAgentId))
+                        .toList();
+            }
 
             if (deliveryAgents.isEmpty()) {
                 log.info("No delivery agents found under {} km", i);

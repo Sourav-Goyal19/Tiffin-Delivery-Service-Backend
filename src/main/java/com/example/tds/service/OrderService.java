@@ -3,6 +3,7 @@ package com.example.tds.service;
 import com.example.tds.entity.*;
 import lombok.extern.slf4j.Slf4j;
 import com.example.tds.repository.*;
+import com.example.tds.enums.WeekDay;
 import lombok.RequiredArgsConstructor;
 import com.example.tds.dto.responses.*;
 import com.example.tds.enums.OrderStatus;
@@ -12,25 +13,27 @@ import org.springframework.stereotype.Service;
 import com.example.tds.enums.DeliveryAgentStatus;
 import com.example.tds.mapper.DeliveryAgentMapper;
 import com.example.tds.exception.BadRequestException;
-import com.example.tds.enums.WeekDay;
 import com.example.tds.projection.OrderForUserProjection;
 import com.example.tds.projection.OrderForChefProjection;
 import com.example.tds.exception.ResourceNotFoundException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.tds.dto.requests.orders.OrderDeliveredRequest;
+import com.example.tds.dto.requests.orders.OrderPickUpRequest;
 import com.example.tds.projection.OrderForDeliveryAgentProjection;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
 import java.util.UUID;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderMapper orderMapper;
+    private final StringRedisTemplate template;
     private final OrderRepository orderRepository;
     private final DeliveryService deliveryService;
     private final DeliveryAgentMapper agentMapper;
@@ -38,7 +41,9 @@ public class OrderService {
     private final SubscriptionRepository subscriptionRepository;
     private final DeliveryAgentRepository deliveryAgentRepository;
     private final DeliveryPaymentRepository deliveryPaymentRepository;
-    private final StringRedisTemplate template;
+    private final DeliveryAgentEarningRepository deliveryAgentEarningRepository;
+
+    private final double CANCELLATION_FEE = 5.0D;
 
     @Transactional
     public void createOrder(UUID subscriptionId){
@@ -63,6 +68,12 @@ public class OrderService {
             order.setToLocation(user.getAddress());
             order.setOrderDate(currentDate);
 
+            int pickUpOtp = ThreadLocalRandom.current().nextInt(1000, 10000);
+            int dropOtp = ThreadLocalRandom.current().nextInt(1000, 10000);
+
+            order.setPickUpOtp(pickUpOtp);
+            order.setDropOtp(dropOtp);
+
             orders.add(order);
             currentDate = currentDate.plusDays(1);
         }
@@ -70,84 +81,75 @@ public class OrderService {
         orderRepository.saveAll(orders);
     }
 
-    public OrderForChefResponse getOrdersForChef(UUID chefId) {
+    public List<OrderForChefResponse> getOrdersForChef(UUID chefId) {
         List<OrderForChefProjection> orders = orderRepository.findByChefId(chefId);
 
-        return mapToOrderForChefResponse(orders);
+        return orders.stream().map(this::mapToOrderForChefResponse).toList();
     }
 
-    private OrderForChefResponse mapToOrderForChefResponse(List<OrderForChefProjection> orders) {
-        if (orders.isEmpty()) {
-            return OrderForChefResponse.builder().build();
+    private OrderForChefResponse mapToOrderForChefResponse(OrderForChefProjection proj) {
+        ChefOrderResponse order = ChefOrderResponse.builder()
+                .orderId(proj.getOrderId())
+                .deliveryAgentId(proj.getDeliveryAgentId())
+                .fromLocation(proj.getFromLocation())
+                .toLocation(proj.getToLocation())
+                .status(proj.getStatus())
+                .orderDate(proj.getOrderDate())
+                .pickUpOtp(proj.getPickUpOtp())
+                .createdAt(proj.getCreatedAt())
+                .updatedAt(proj.getUpdatedAt())
+                .build();
+
+        SubscriptionResponse subscription = SubscriptionResponse.builder()
+                .subscriptionId(proj.getSubscriptionId())
+                .deliveryType(proj.getSubscriptionDeliveryType())
+                .planType(proj.getSubscriptionPlanType())
+                .isActive(proj.getSubscriptionIsActive())
+                .price(proj.getSubscriptionPrice())
+                .startDate(proj.getSubscriptionStartDate())
+                .endDate(proj.getSubscriptionEndData())
+                .createdAt(proj.getSubscriptionCreatedAt())
+                .updatedAt(proj.getSubscriptionUpdatedAt())
+                .build();
+
+        MenuResponse menu = MenuResponse.builder()
+                .menuId(proj.getMenuId())
+                .weekDay(proj.getMenuWeekDay())
+                .mealType(proj.getMenuMealType())
+                .isActive(proj.getMenuIsActive())
+                .chefId(proj.getMenuChefId())
+                .thumbnailUrl(proj.getMenuThumbnailUrl())
+                .createdAt(proj.getMenuCreatedAt())
+                .updatedAt(proj.getMenuUpdatedAt())
+                .items(proj.getMenuItems() != null ? java.util.Arrays.asList(proj.getMenuItems().replace("{", "").replace("}", "").split(",")) : null)
+                .build();
+
+        UserResponse user = UserResponse.builder()
+                .id(proj.getUserId())
+                .name(proj.getUserName())
+                .address(proj.getUserAddress())
+                .createdAt(proj.getUserCreatedAt())
+                .updatedAt(proj.getUserUpdatedAt())
+                .build();
+                
+        DeliveryAgentResponse deliveryAgent = null;
+        if (proj.getDeliveryAgentId() != null) {
+            deliveryAgent = DeliveryAgentResponse.builder()
+                    .deliveryAgentId(proj.getDeliveryAgentId())
+                    .name(proj.getDeliveryAgentName())
+                    .mobileNo(proj.getDeliveryAgentMobileNo())
+                    .status(proj.getDeliveryAgentStatus() != null ? DeliveryAgentStatus.valueOf(proj.getDeliveryAgentStatus()) : null)
+                    .createdAt(proj.getDeliveryAgentCreatedAt())
+                    .lastActiveAt(proj.getDeliveryAgentLastActiveAt())
+                    .build();
         }
 
-        List<OrderWithDetailsResponse> mappedOrders = orders.stream().map(proj -> {
-            ChefOrderResponse order = ChefOrderResponse.builder()
-                    .orderId(proj.getOrderId())
-                    .deliveryAgentId(proj.getDeliveryAgentId())
-                    .fromLocation(proj.getFromLocation())
-                    .toLocation(proj.getToLocation())
-                    .status(proj.getStatus())
-                    .orderDate(proj.getOrderDate())
-                    .createdAt(proj.getCreatedAt())
-                    .updatedAt(proj.getUpdatedAt())
-                    .build();
-
-            SubscriptionResponse subscription = SubscriptionResponse.builder()
-                    .subscriptionId(proj.getSubscriptionId())
-                    .deliveryType(proj.getSubscriptionDeliveryType())
-                    .planType(proj.getSubscriptionPlanType())
-                    .isActive(proj.getSubscriptionIsActive())
-                    .price(proj.getSubscriptionPrice())
-                    .startDate(proj.getSubscriptionStartDate())
-                    .endDate(proj.getSubscriptionEndData())
-                    .createdAt(proj.getSubscriptionCreatedAt())
-                    .updatedAt(proj.getSubscriptionUpdatedAt())
-                    .build();
-
-            MenuResponse menu = MenuResponse.builder()
-                    .menuId(proj.getMenuId())
-                    .weekDay(proj.getMenuWeekDay())
-                    .mealType(proj.getMenuMealType())
-                    .isActive(proj.getMenuIsActive())
-                    .chefId(proj.getMenuChefId())
-                    .thumbnailUrl(proj.getMenuThumbnailUrl())
-                    .createdAt(proj.getMenuCreatedAt())
-                    .updatedAt(proj.getMenuUpdatedAt())
-                    .items(proj.getMenuItems() != null ? java.util.Arrays.asList(proj.getMenuItems().replace("{", "").replace("}", "").split(",")) : null)
-                    .build();
-
-            UserResponse user = UserResponse.builder()
-                    .id(proj.getUserId())
-                    .name(proj.getUserName())
-                    .address(proj.getUserAddress())
-                    .createdAt(proj.getUserCreatedAt())
-                    .updatedAt(proj.getUserUpdatedAt())
-                    .build();
-                    
-            DeliveryAgentResponse deliveryAgent = null;
-            if (proj.getDeliveryAgentId() != null) {
-                deliveryAgent = DeliveryAgentResponse.builder()
-                        .deliveryAgentId(proj.getDeliveryAgentId())
-                        .name(proj.getDeliveryAgentName())
-                        .mobileNo(proj.getDeliveryAgentMobileNo())
-                        .status(proj.getDeliveryAgentStatus() != null ? DeliveryAgentStatus.valueOf(proj.getDeliveryAgentStatus()) : null)
-                        .createdAt(proj.getDeliveryAgentCreatedAt())
-                        .lastActiveAt(proj.getDeliveryAgentLastActiveAt())
-                        .build();
-            }
-
-            return OrderWithDetailsResponse.builder()
-                    .order(order)
-                    .subscription(subscription)
-                    .menu(menu)
-                    .user(user)
-                    .deliveryAgent(deliveryAgent)
-                    .build();
-        }).toList();
-
         return OrderForChefResponse.builder()
-                .orders(mappedOrders)
+                .order(order)
+                .subscription(subscription)
+                .menu(menu)
+                .user(user)
+                .deliveryAgent(deliveryAgent)
                 .build();
     }
 
@@ -160,7 +162,7 @@ public class OrderService {
         MealPlanEntity mealPlan = subscription.getMealPlan();
         ChefEntity chef = mealPlan.getChef();
 
-        DeliveryAgentEntity deliveryAgent = deliveryService.getDeliveryAgent(order);
+        DeliveryAgentEntity deliveryAgent = deliveryService.getDeliveryAgent(order, null);
 
         order.setDeliveryAgent(deliveryAgent);
         order.setFromLocation(chef.getAddress());
@@ -268,7 +270,7 @@ public class OrderService {
                 .toLocation(proj.getOrderToLocation())
                 .status(proj.getOrderStatus())
                 .orderDate(proj.getOrderDate())
-                .orderOtp(proj.getOrderOtp())
+                .dropOtp(proj.getDropOtp())
                 .createdAt(proj.getOrderCreatedAt())
                 .updatedAt(proj.getOrderUpdatedAt())
                 .build();
@@ -327,8 +329,7 @@ public class OrderService {
                 .build();
     }
 
-    @Transactional
-    public OrderResponse updateOrderStatus(UUID orderId, OrderStatus status) {
+    private void updateOrderStatusEntity(UUID orderId, OrderStatus status) {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
@@ -339,7 +340,82 @@ public class OrderService {
             template.convertAndSend(DeliveryAgentService.AGENT_LOCATION_CHANNEL_PREFIX + order.getDeliveryAgent().getDeliveryAgentId(), DeliveryAgentService.CLOSE_CONNECTION_MESSAGE_PREFIX + order.getOrderId());
         }
 
+    }
+
+    @Transactional
+    public OrderForChefResponse updateChefOrderStatus(UUID chefId, UUID orderId, OrderStatus status) {
+        updateOrderStatusEntity(orderId, status);
+
+        OrderForChefProjection proj = orderRepository.getOrderByOrderIdAndChefId(orderId, chefId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found or access denied"));
+
+        return mapToOrderForChefResponse(proj);
+    }
+
+    @Transactional
+    public void handleOrderCancellation(UUID orderId, UUID deliveryAgentId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        if (order.getStatus() != OrderStatus.ASSIGNED) {
+            throw new BadRequestException("Order is not in ASSIGNED status");
+        }
+
+        if (order.getDeliveryAgent() == null || !order.getDeliveryAgent().getDeliveryAgentId().equals(deliveryAgentId)) {
+            throw new BadRequestException("Delivery agent not assigned to this order");
+        }
+
+        DeliveryAgentEntity cancellingAgent = order.getDeliveryAgent();
+        cancellingAgent.setStatus(DeliveryAgentStatus.ACTIVE);
+        deliveryAgentRepository.save(cancellingAgent);
+
+        deliveryAgentEarningRepository.findByDeliveryAgent_DeliveryAgentId(deliveryAgentId)
+                .ifPresent(earning -> {
+                    earning.setEarning(earning.getEarning() - CANCELLATION_FEE);
+                    deliveryAgentEarningRepository.save(earning);
+                });
+
+        try {
+            DeliveryAgentEntity newAgent = deliveryService.getDeliveryAgent(order, deliveryAgentId);
+            order.setDeliveryAgent(newAgent);
+            newAgent.setStatus(DeliveryAgentStatus.BUSY);
+            deliveryAgentRepository.save(newAgent);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Could not find a new delivery agent for order {} after cancellation", orderId);
+            order.setDeliveryAgent(null);
+            order.setStatus(OrderStatus.READY);
+        }
+
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public OrderResponse handleOrderPickup(UUID orderId, OrderPickUpRequest request) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        validateOrderPickup(order, request.getPickUpOtp());
+
+        order.setStatus(OrderStatus.PICKED_UP);
+        order = orderRepository.save(order);
+
         return orderMapper.toOrderResponse(order);
+    }
+
+    private void validateOrderPickup(OrderEntity order, int providedOtp) {
+        OrderStatus currentStatus = order.getStatus();
+
+        if (currentStatus == OrderStatus.PICKED_UP || currentStatus == OrderStatus.DELIVERED || currentStatus == OrderStatus.CANCELLED) {
+            throw new BadRequestException("Order has already processed or cancelled");
+        }
+
+        if (currentStatus != OrderStatus.ASSIGNED) {
+            throw new BadRequestException("Order is not assigned for pickup");
+        }
+
+        if (providedOtp != order.getPickUpOtp()) {
+            throw new BadRequestException("Invalid pick-up OTP");
+        }
     }
 
     @Transactional
@@ -347,7 +423,7 @@ public class OrderService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
-        validateOrderDelivery(order, request.getOrderOtp());
+        validateOrderDelivery(order, request.getDropOtp());
 
         order.setStatus(OrderStatus.DELIVERED);
 
@@ -371,7 +447,7 @@ public class OrderService {
             throw new BadRequestException("Order has already processed or cancelled");
         }
 
-        if (providedOtp != order.getOrderOtp()) {
+        if (providedOtp != order.getDropOtp()) {
             throw new BadRequestException("Invalid order OTP");
         }
 
@@ -423,8 +499,7 @@ public class OrderService {
         };
     }
 
-    @Transactional
-    public List<OrderResponse> updateMultipleOrdersStatus(List<UUID> orderIds, OrderStatus status) {
+    private void updateMultipleOrdersStatusEntities(List<UUID> orderIds, OrderStatus status) {
         List<OrderEntity> orders = orderRepository.findAllById(orderIds);
 
         if (orders.isEmpty()) {
@@ -437,8 +512,13 @@ public class OrderService {
                 template.convertAndSend(DeliveryAgentService.AGENT_LOCATION_CHANNEL_PREFIX + order.getDeliveryAgent().getDeliveryAgentId(), DeliveryAgentService.CLOSE_CONNECTION_MESSAGE_PREFIX + order.getOrderId());
             }
         });
-        orders = orderRepository.saveAll(orders);
+        orderRepository.saveAll(orders);
+    }
 
-        return orders.stream().map(orderMapper::toOrderResponse).toList();
+    @Transactional
+    public List<OrderForChefResponse> updateMultipleChefOrdersStatus(UUID chefId, List<UUID> orderIds, OrderStatus status) {
+        updateMultipleOrdersStatusEntities(orderIds, status);
+        List<OrderForChefProjection> projections = orderRepository.getOrdersByOrderIdsAndChefId(orderIds, chefId);
+        return projections.stream().map(this::mapToOrderForChefResponse).toList();
     }
 }

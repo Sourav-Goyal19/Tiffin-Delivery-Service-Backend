@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class OrderDeliveredRequest {
-    @NotNull(message = "Order's otp is required")
-    private Integer dropOtp;
+public class OrderPickUpRequest {
+    @NotNull(message = "Order's pick-up otp is required")
+    private Integer pickUpOtp;
 }

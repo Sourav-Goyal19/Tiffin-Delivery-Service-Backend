@@ -22,6 +22,7 @@ public interface OrderForChefProjection {
     String getToLocation();
     OrderStatus getStatus();
     LocalDate getOrderDate();
+    Integer getPickUpOtp();
     LocalDateTime getCreatedAt();
     LocalDateTime getUpdatedAt();
 
