@@ -125,14 +125,9 @@ public class DeliveryAgentController {
         );
     }
 
-    @GetMapping("/route")
-    public ResponseEntity<ApiResponse> getRoute(
-            @RequestParam("startLng") @Min(-180) @Max(180) double startLng,
-            @RequestParam("startLat") @Min(-90) @Max(90) double startLat,
-            @RequestParam("endLng") @Min(-180) @Max(180) double endLng,
-            @RequestParam("endLat") @Min(-90) @Max(90) double endLat
-    ) {
-        GoogleMapsRouteResponse route = deliveryAgentService.getRoute(startLng, startLat, endLng, endLat);
+    @GetMapping("/route/{orderId}")
+    public ResponseEntity<ApiResponse> getRoute(@PathVariable("orderId") UUID orderId) {
+        GoogleMapsRouteResponse route = deliveryAgentService.getRouteForOrder(orderId);
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()

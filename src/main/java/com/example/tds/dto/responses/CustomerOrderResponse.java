@@ -10,5 +10,5 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 public class CustomerOrderResponse extends OrderResponse {
-    private Integer orderOTP;
+    private Integer orderOtp;
 }

@@ -1,11 +1,14 @@
 package com.example.tds.repository;
 
 import com.example.tds.entity.OrderEntity;
-import com.example.tds.projection.OrderForDeliveryAgentProjection;
+import com.example.tds.enums.WeekDay;
 import org.springframework.data.jpa.repository.Query;
+import com.example.tds.projection.OrderForUserProjection;
 import com.example.tds.projection.OrderForChefProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.tds.projection.OrderForDeliveryAgentProjection;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
@@ -214,4 +217,203 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
         ORDER BY "orderUpdatedAt" DESC;
         """)
     List<OrderForDeliveryAgentProjection> getActiveOrdersByDeliveryAgentId(UUID deliveryAgentId);
+
+    @Query(nativeQuery = true, value = """
+        SELECT
+            o.order_id            AS "orderId",
+            o.subscription_id     AS "orderSubscriptionId",
+            o.delivery_agent_id   AS "orderDeliveryAgentId",
+            o.from_location       AS "orderFromLocation",
+            o.to_location         AS "orderToLocation",
+            o.status              AS "orderStatus",
+            o.order_date          AS "orderDate",
+            o.order_otp           AS "orderOtp",
+            o.created_at          AS "orderCreatedAt",
+            o.updated_at          AS "orderUpdatedAt",
+
+            da.name               AS "deliveryAgentName",
+            da.mobile_no          AS "deliveryAgentMobileNo",
+            da.status             AS "deliveryAgentStatus",
+            da.created_at         AS "deliveryAgentCreatedAt",
+            da.last_active_at     AS "deliveryAgentLastActiveAt",
+
+            s.subscription_id     AS "subscriptionId",
+            s.delivery_type       AS "subscriptionDeliveryType",
+            s.plan_type           AS "subscriptionPlanType",
+            s.is_active           AS "subscriptionIsActive",
+            s.price               AS "subscriptionPrice",
+            s.start_date          AS "subscriptionStartDate",
+            s.end_date            AS "subscriptionEndData",
+            s.created_at          AS "subscriptionCreatedAt",
+            s.updated_at          AS "subscriptionUpdatedAt",
+
+            c.chef_id             AS "chefId",
+            c.name                AS "chefName",
+            c.rating              AS "chefRating",
+            c.created_at          AS "chefCreatedAt",
+            c.updated_at          AS "chefUpdatedAt",
+
+            m.menu_id             AS "menuId",
+            m.items               AS "menuItems",
+            m.chef_id             AS "menuChefId",
+            m.week_day            AS "menuWeekDay",
+            m.thumbnail_url       AS "menuThumbnailUrl",
+            m.meal_type           AS "menuMealType",
+            m.is_active           AS "menuIsActive",
+            m.created_at          AS "menuCreatedAt",
+            m.updated_at          AS "menuUpdatedAt"
+        FROM orders o
+        LEFT JOIN delivery_agents da
+            ON da.delivery_agent_id = o.delivery_agent_id
+        JOIN subscriptions s
+            ON s.subscription_id = o.subscription_id
+        JOIN users u
+            ON u.user_id = s.user_id
+        JOIN meal_plans mp
+            ON mp.meal_plan_id = s.meal_plan_id
+        JOIN chefs c
+            ON c.chef_id = mp.chef_id
+        JOIN menus m
+            ON m.chef_id = c.chef_id AND mp.meal_type = m.meal_type
+        WHERE
+            u.user_id = :userId AND
+            s.is_active = true;
+    """)
+    List<OrderForUserProjection> getOrdersByUserId(UUID userId);
+
+    @Query(nativeQuery = true, value = """
+        SELECT
+            o.order_id            AS "orderId",
+            o.subscription_id     AS "orderSubscriptionId",
+            o.delivery_agent_id   AS "orderDeliveryAgentId",
+            o.from_location       AS "orderFromLocation",
+            o.to_location         AS "orderToLocation",
+            o.status              AS "orderStatus",
+            o.order_date          AS "orderDate",
+            o.order_otp           AS "orderOtp",
+            o.created_at          AS "orderCreatedAt",
+            o.updated_at          AS "orderUpdatedAt",
+
+            da.name               AS "deliveryAgentName",
+            da.mobile_no          AS "deliveryAgentMobileNo",
+            da.status             AS "deliveryAgentStatus",
+            da.created_at         AS "deliveryAgentCreatedAt",
+            da.last_active_at     AS "deliveryAgentLastActiveAt",
+
+            s.subscription_id     AS "subscriptionId",
+            s.delivery_type       AS "subscriptionDeliveryType",
+            s.plan_type           AS "subscriptionPlanType",
+            s.is_active           AS "subscriptionIsActive",
+            s.price               AS "subscriptionPrice",
+            s.start_date          AS "subscriptionStartDate",
+            s.end_date            AS "subscriptionEndData",
+            s.created_at          AS "subscriptionCreatedAt",
+            s.updated_at          AS "subscriptionUpdatedAt",
+
+            c.chef_id             AS "chefId",
+            c.name                AS "chefName",
+            c.address             AS "chefAddress",
+            c.rating              AS "chefRating",
+            c.created_at          AS "chefCreatedAt",
+            c.updated_at          AS "chefUpdatedAt",
+
+            m.menu_id             AS "menuId",
+            m.items               AS "menuItems",
+            m.chef_id             AS "menuChefId",
+            m.week_day            AS "menuWeekDay",
+            m.thumbnail_url       AS "menuThumbnailUrl",
+            m.meal_type           AS "menuMealType",
+            m.is_active           AS "menuIsActive",
+            m.created_at          AS "menuCreatedAt",
+            m.updated_at          AS "menuUpdatedAt"
+        FROM orders o
+        LEFT JOIN delivery_agents da
+            ON da.delivery_agent_id = o.delivery_agent_id
+        JOIN subscriptions s
+            ON s.subscription_id = o.subscription_id
+        JOIN users u
+            ON u.user_id = s.user_id
+        JOIN meal_plans mp
+            ON mp.meal_plan_id = s.meal_plan_id
+        JOIN chefs c
+            ON c.chef_id = mp.chef_id
+        JOIN menus m
+            ON m.chef_id = c.chef_id AND
+               mp.meal_type = m.meal_type AND
+               m.is_active = true AND
+               m.week_day = :weekDay
+        WHERE
+            u.user_id = :userId AND
+            o.order_date = :orderDate AND
+            s.is_active = true;
+    """)
+    List<OrderForUserProjection> getOrdersByUserIdAndDate(UUID userId, LocalDate orderDate, String weekDay);
+
+    @Query(nativeQuery = true, value = """
+        SELECT
+            o.order_id            AS "orderId",
+            o.subscription_id     AS "orderSubscriptionId",
+            o.delivery_agent_id   AS "orderDeliveryAgentId",
+            o.from_location       AS "orderFromLocation",
+            o.to_location         AS "orderToLocation",
+            o.status              AS "orderStatus",
+            o.order_date          AS "orderDate",
+            o.order_otp           AS "orderOtp",
+            o.created_at          AS "orderCreatedAt",
+            o.updated_at          AS "orderUpdatedAt",
+
+            da.name               AS "deliveryAgentName",
+            da.mobile_no          AS "deliveryAgentMobileNo",
+            da.status             AS "deliveryAgentStatus",
+            da.created_at         AS "deliveryAgentCreatedAt",
+            da.last_active_at     AS "deliveryAgentLastActiveAt",
+
+            s.subscription_id     AS "subscriptionId",
+            s.delivery_type       AS "subscriptionDeliveryType",
+            s.plan_type           AS "subscriptionPlanType",
+            s.is_active           AS "subscriptionIsActive",
+            s.price               AS "subscriptionPrice",
+            s.start_date          AS "subscriptionStartDate",
+            s.end_date            AS "subscriptionEndData",
+            s.created_at          AS "subscriptionCreatedAt",
+            s.updated_at          AS "subscriptionUpdatedAt",
+
+            c.chef_id             AS "chefId",
+            c.name                AS "chefName",
+            c.address             AS "chefAddress",
+            c.rating              AS "chefRating",
+            c.created_at          AS "chefCreatedAt",
+            c.updated_at          AS "chefUpdatedAt",
+
+            m.menu_id             AS "menuId",
+            m.items               AS "menuItems",
+            m.chef_id             AS "menuChefId",
+            m.week_day            AS "menuWeekDay",
+            m.thumbnail_url       AS "menuThumbnailUrl",
+            m.meal_type           AS "menuMealType",
+            m.is_active           AS "menuIsActive",
+            m.created_at          AS "menuCreatedAt",
+            m.updated_at          AS "menuUpdatedAt"
+        FROM orders o
+        LEFT JOIN delivery_agents da
+            ON da.delivery_agent_id = o.delivery_agent_id
+        JOIN subscriptions s
+            ON s.subscription_id = o.subscription_id
+        JOIN users u
+            ON u.user_id = s.user_id
+        JOIN meal_plans mp
+            ON mp.meal_plan_id = s.meal_plan_id AND mp.is_active = true
+        JOIN chefs c
+            ON c.chef_id = mp.chef_id
+        JOIN menus m
+            ON m.chef_id = c.chef_id AND
+               mp.meal_type = m.meal_type AND
+               m.is_active = true AND
+               m.week_day = :weekDay
+        WHERE
+            o.order_id = :orderId AND
+            u.user_id = :userId AND
+            s.is_active = true;
+    """)
+    Optional<OrderForUserProjection> getOrderByUserIdAndOrderId(UUID userId, UUID orderId, String weekDay);
 }
