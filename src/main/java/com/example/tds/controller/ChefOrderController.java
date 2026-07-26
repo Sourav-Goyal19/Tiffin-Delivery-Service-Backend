@@ -1,5 +1,7 @@
 package com.example.tds.controller;
 
+import com.example.tds.dto.responses.GoogleMapsRouteResponse;
+import com.example.tds.service.DeliveryAgentService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -7,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import com.example.tds.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import com.example.tds.dto.responses.ApiResponse;
-import com.example.tds.dto.responses.OrderResponse;
 import com.example.tds.dto.responses.OrderForChefResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,6 @@ import com.example.tds.dto.requests.orders.UpdateMultipleOrdersStatusRequest;
 import java.util.Map;
 import java.util.List;
 import java.util.UUID;
-import java.util.HashMap;
 
 @Slf4j
 @RestController
@@ -30,19 +30,33 @@ import java.util.HashMap;
 @RequestMapping("/api/chefs")
 public class ChefOrderController {
     private final OrderService orderService;
+    private final DeliveryAgentService deliveryAgentService;
+
+    @GetMapping("/{chefId}/orders/{orderId}/route")
+    public ResponseEntity<ApiResponse> getOrderRoute(
+            @PathVariable("chefId") UUID chefId,
+            @PathVariable("orderId") UUID orderId) {
+
+        GoogleMapsRouteResponse route = deliveryAgentService.getRouteForOrder(orderId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Route fetched successfully")
+                        .success(true)
+                        .data(Map.of("route", route))
+                        .build()
+        );
+    }
 
     @GetMapping("/{chefId}/orders/today")
     public ResponseEntity<ApiResponse> getOrdersForChef(@PathVariable("chefId") UUID chefId) {
-        OrderForChefResponse response = orderService.getOrdersForChef(chefId);
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("orders", response.getOrders());
+        List<OrderForChefResponse> orders = orderService.getOrdersForChef(chefId);
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
                         .message("Orders retrieved successfully")
                         .success(true)
-                        .data(data)
+                        .data(Map.of("orders", orders))
                         .build()
         );
     }
@@ -53,7 +67,7 @@ public class ChefOrderController {
             @PathVariable("orderId") UUID orderId,
             @RequestBody @Valid UpdateOrderStatusRequest request) {
 
-        OrderResponse response = orderService.updateOrderStatus(orderId, request.getStatus());
+        OrderForChefResponse response = orderService.updateChefOrderStatus(chefId, orderId, request.getStatus());
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
@@ -69,7 +83,7 @@ public class ChefOrderController {
             @PathVariable("chefId") UUID chefId,
             @RequestBody @Valid UpdateMultipleOrdersStatusRequest request) {
 
-        List<OrderResponse> response = orderService.updateMultipleOrdersStatus(request.getOrderIds(), request.getStatus());
+        List<OrderForChefResponse> response = orderService.updateMultipleChefOrdersStatus(chefId, request.getOrderIds(), request.getStatus());
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()

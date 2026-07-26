@@ -1,5 +1,6 @@
 package com.example.tds.controller;
 
+import com.example.tds.dto.requests.orders.OrderPickUpRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -58,10 +59,10 @@ public class DeliveryAgentOrderController {
 
     @PatchMapping("/{agentId}/orders/{orderId}/status/pickup")
     public ResponseEntity<ApiResponse> updateOrderStatusToPickup(
-            @PathVariable("agentId") UUID agentId,
-            @PathVariable("orderId") UUID orderId) {
+            @PathVariable("orderId") UUID orderId,
+            @RequestBody @Valid OrderPickUpRequest request) {
 
-        OrderResponse response = orderService.updateOrderStatus(orderId, OrderStatus.PICKED_UP);
+        OrderResponse response = orderService.handleOrderPickup(orderId, request);
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
@@ -72,9 +73,23 @@ public class DeliveryAgentOrderController {
         );
     }
 
+    @PatchMapping("/{agentId}/orders/{orderId}/status/cancel")
+    public ResponseEntity<ApiResponse> handleOrderCancellation(
+            @PathVariable("agentId") UUID agentId,
+            @PathVariable("orderId") UUID orderId) {
+
+        orderService.handleOrderCancellation(orderId, agentId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Order cancelled successfully")
+                        .success(true)
+                        .build()
+        );
+    }
+
     @PatchMapping("/{agentId}/orders/{orderId}/status/delivered")
     public ResponseEntity<ApiResponse> handleOrderDelivered(
-            @PathVariable("agentId") UUID agentId,
             @PathVariable("orderId") UUID orderId,
             @RequestBody @Valid OrderDeliveredRequest request) {
 
