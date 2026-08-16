@@ -12,12 +12,6 @@ target/
 .springBeans
 .sts4-cache
 
-
-!**/src/main/resources/application.properties
-/src/main/resources/application.properties
-application.properties
-src/main/resources/application.properties
-
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -25,6 +19,7 @@ src/main/resources/application.properties
 *.ipr
 
 .env.*
+!.env.example
 .env
 .env.production
 
