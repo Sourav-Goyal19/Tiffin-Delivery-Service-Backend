@@ -39,3 +39,10 @@ build/
 .DS_Store
 service-account-key.json
 /docker/graphhopper
+
+### OpenStreetMap / GraphHopper data files ###
+*.pbf
+*.osm
+*.osm.pbf
+graph-cache/
+graphhopper-cache/

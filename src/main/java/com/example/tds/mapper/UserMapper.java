@@ -6,7 +6,7 @@ import com.example.tds.dto.requests.users.UserSignUpRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)

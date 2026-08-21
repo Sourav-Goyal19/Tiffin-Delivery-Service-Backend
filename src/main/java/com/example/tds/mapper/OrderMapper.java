@@ -8,7 +8,7 @@ import com.example.tds.entity.OrderEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface OrderMapper {
     @Mapping(source = "subscription.subscriptionId", target = "subscriptionId")
     @Mapping(source = "deliveryAgent.deliveryAgentId", target = "deliveryAgentId")

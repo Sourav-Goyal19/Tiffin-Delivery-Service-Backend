@@ -1,6 +1,7 @@
 package com.example.tds.exception;
 
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import com.example.tds.dto.responses.ErrorResponse;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -100,7 +102,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex){
         return ErrorResponse.builder()
                 .errors(null)
@@ -118,6 +120,34 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleConstraintViolation(ConstraintViolationException ex) {
+        Map<Object, Object> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(cv -> {
+            String path = cv.getPropertyPath().toString();
+            String field = path.contains(".")
+                    ? path.substring(path.lastIndexOf('.') + 1)
+                    : path;
+            errors.put(field, cv.getMessage());
+        });
+        return ErrorResponse.builder()
+                .success(false).message("Validation failed")
+                .errors(errors).timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingParam(MissingServletRequestParameterException ex) {
+        Map<Object, Object> errors = new HashMap<>();
+        errors.put(ex.getParameterName(), ex.getParameterName() + " is required");
+        return ErrorResponse.builder()
+                .success(false).message("Validation failed")
+                .errors(errors).timestamp(LocalDateTime.now())
                 .build();
     }
 

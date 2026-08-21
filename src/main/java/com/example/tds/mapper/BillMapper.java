@@ -5,7 +5,7 @@ import com.example.tds.entity.BillEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface BillMapper {
     @Mapping(source = "subscription.subscriptionId", target = "subscriptionId")
     BillResponse toBillResponse(BillEntity billEntity);

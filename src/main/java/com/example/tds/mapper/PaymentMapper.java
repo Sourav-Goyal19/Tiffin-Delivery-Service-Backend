@@ -6,7 +6,7 @@ import com.example.tds.entity.PaymentEntity;
 import com.razorpay.Payment;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface PaymentMapper {
     PaymentEntity toPaymentEntity(CreatePaymentRequest request);
     PaymentResponse toPaymentResponse(PaymentEntity payment);

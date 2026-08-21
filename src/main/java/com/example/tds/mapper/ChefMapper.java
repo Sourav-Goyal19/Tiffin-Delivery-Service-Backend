@@ -5,7 +5,7 @@ import com.example.tds.dto.requests.chefs.ChefSignUpRequest;
 import com.example.tds.entity.ChefEntity;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface ChefMapper {
     ChefEntity toChefEntity(ChefSignUpRequest createRequest);
 

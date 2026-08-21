@@ -1,10 +1,10 @@
 package com.example.tds;
 
-import io.swagger.v3.oas.annotations.info.Info;
 import io.github.cdimascio.dotenv.Dotenv;
+import io.swagger.v3.oas.annotations.info.Info;
+import org.springframework.boot.SpringApplication;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
@@ -13,8 +13,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TiffinDeliveryServiceApplication {
 
     public static void main(String[] args) {
-        // Load .env file and expose values as system properties so that
-        // Spring Boot can resolve ${ENV_VAR} placeholders in configuration.
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
         dotenv.entries().forEach(entry ->
             System.setProperty(entry.getKey(), entry.getValue())

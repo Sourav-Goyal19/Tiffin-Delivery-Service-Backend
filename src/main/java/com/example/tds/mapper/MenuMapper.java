@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface MenuMapper {
     MenuEntity toMenuEntity(CreateMenuRequest menuRequest);
     MenuEntity toMenuEntity(UpdateMenuRequest menuRequest);
