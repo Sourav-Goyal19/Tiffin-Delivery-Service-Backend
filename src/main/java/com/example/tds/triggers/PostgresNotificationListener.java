@@ -15,13 +15,11 @@ import com.example.tds.dto.requests.orders.SubscriptionPayloadForOrder;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.sql.Connection;
-import javax.sql.DataSource;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PostgresNotificationListener {
-    private final DataSource dataSource;
     private final ObjectMapper objectMapper;
     private final OrderService orderService;
 

@@ -6,7 +6,7 @@ import com.example.tds.entity.SubscriptionEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface SubscriptionMapper {
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "mealPlan.mealPlanId", target = "mealPlanId")

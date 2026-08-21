@@ -1,5 +1,6 @@
 package com.example.tds;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.boot.SpringApplication;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -12,6 +13,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TiffinDeliveryServiceApplication {
 
     public static void main(String[] args) {
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+        dotenv.entries().forEach(entry ->
+            System.setProperty(entry.getKey(), entry.getValue())
+        );
+
         SpringApplication.run(TiffinDeliveryServiceApplication.class, args);
     }
 
