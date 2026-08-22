@@ -3,9 +3,7 @@ package com.example.tds.repository;
 import com.example.tds.entity.MenuEntity;
 import com.example.tds.enums.MealType;
 import com.example.tds.enums.WeekDay;
-import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.tds.projection.MenuWithDistanceProjection;
 
@@ -19,6 +17,13 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
     Optional<MenuEntity> findByChefChefIdAndMealTypeAndWeekDayAndIsActiveTrue(UUID chefId, MealType mealType, WeekDay weekDay);
 
     @Query(value = """
+        WITH valid_menus AS (
+          SELECT m2.chef_id, m2.meal_type from menus m2
+          WHERE m2.is_active = true
+          GROUP BY m2.chef_id, m2.meal_type
+          HAVING COUNT(DISTINCT m2.week_day) = 7
+        )
+
         SELECT
             m.menu_id         AS "menuId",
             m.meal_type       AS "mealType",
@@ -37,7 +42,8 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             c.rating          AS "rating",
             c.created_at      AS "chefCreatedAt",
             c.updated_at      AS "chefUpdatedAt",
-            ROUND((ST_Distance(c.location::geography, u.location::geography) / 1000.0)::numeric, 2) AS "disInKm",
+            ROUND((ST_Distance(c.location::geography, u.location::geography) / 1000.0)::numeric, 2)
+                              AS "disInKm",
 
             mp.meal_plan_id  AS "mealPlanId",
             mp.weekly_price  AS "weeklyPrice",
@@ -49,6 +55,9 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             mp.created_at    AS "mealPlanCreatedAt",
             mp.updated_at    AS "mealPlanUpdatedAt"
         FROM menus m
+        JOIN valid_menus vm
+            ON vm.chef_id = m.chef_id
+            AND vm.meal_type = m.meal_type
         JOIN chefs c
             ON c.chef_id = m.chef_id
         JOIN meal_plans mp
@@ -59,21 +68,28 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
         JOIN users u
             ON u.user_id = :userId
         WHERE ST_DWithin(
-            c.location,
-            u.location,
+            c.location::geography,
+            u.location::geography,
             5000
         ) AND m.is_active = true
         ORDER BY "disInKm",
             CASE
-                    WHEN m.meal_type = 'BREAKFAST' THEN 1
-                    WHEN m.meal_type = 'LUNCH' THEN 2
-                    WHEN m.meal_type = 'DINNER' THEN 3
-                    ELSE 4
+                WHEN m.meal_type = 'BREAKFAST' THEN 1
+                WHEN m.meal_type = 'LUNCH' THEN 2
+                WHEN m.meal_type = 'DINNER' THEN 3
+                ELSE 4
             END;
     """, nativeQuery = true)
     Optional<List<MenuWithDistanceProjection>> findAllByDistance(UUID userId);
 
     @Query(nativeQuery = true, value = """
+        WITH valid_menus AS (
+          SELECT m2.chef_id, m2.meal_type from menus m2
+          WHERE m2.is_active = true AND m2.chef_id = :chefId
+          GROUP BY m2.chef_id, m2.meal_type
+          HAVING COUNT(DISTINCT m2.week_day) = 7
+        )
+
         SELECT
             m.menu_id         AS "menuId",
             m.meal_type       AS "mealType",
@@ -92,7 +108,8 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             c.rating          AS "rating",
             c.created_at      AS "chefCreatedAt",
             c.updated_at      AS "chefUpdatedAt",
-            ROUND((ST_Distance(c.location::geography, u.location::geography) / 1000.0)::numeric, 2) AS "disInKm",
+            ROUND((ST_Distance(c.location::geography, u.location::geography) / 1000.0)::numeric, 2)
+                              AS "disInKm",
 
             mp.meal_plan_id  AS "mealPlanId",
             mp.weekly_price  AS "weeklyPrice",
@@ -104,17 +121,24 @@ public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
             mp.created_at    AS "mealPlanCreatedAt",
             mp.updated_at    AS "mealPlanUpdatedAt"
         FROM menus m
+        JOIN valid_menus vm
+            ON vm.chef_id = m.chef_id
+            AND vm.meal_type = m.meal_type
         JOIN chefs c
-            ON c.chef_id = m.chef_id
+            ON c.chef_id = :chefId
         JOIN meal_plans mp
-            ON mp.meal_type = m.meal_type
-            AND mp.chef_id = c.chef_id
+            ON m.meal_type = mp.meal_type
+            AND m.chef_id = mp.chef_id
             AND mp.is_active = true
             AND (mp.remaining_capacity IS NOT NULL AND mp.remaining_capacity > 0)
         JOIN users u
             ON u.user_id = :userId
-        WHERE m.is_active = true AND c.chef_id = :chefId
-        ORDER BY
+        WHERE ST_DWithin(
+            c.location::geography,
+            u.location::geography,
+            5000
+        ) AND m.is_active = true
+        ORDER BY "disInKm",
             CASE
                 WHEN m.meal_type = 'BREAKFAST' THEN 1
                 WHEN m.meal_type = 'LUNCH' THEN 2
