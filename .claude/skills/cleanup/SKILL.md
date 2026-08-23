@@ -1,5 +1,11 @@
 ---
+name: clean-code
 description: Use this skill to clean files in the Spring Boot Java project by removing unused imports, dead code, unused autowired dependencies, and unused variables or methods.
+arguments: [filename]
+argument-hint: "[filename]"
+context: fork
+background: false
+disable-model-invocation: true
 ---
 
 ## Instructions
