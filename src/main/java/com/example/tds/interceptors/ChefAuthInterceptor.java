@@ -3,6 +3,7 @@ package com.example.tds.interceptors;
 import com.example.tds.entity.ChefEntity;
 import com.example.tds.exception.ResourceNotFoundException;
 import com.example.tds.repository.ChefRepository;
+import com.example.tds.service.LogoutService;
 import com.example.tds.utilities.JwtUtility;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,10 +19,11 @@ public class ChefAuthInterceptor implements HandlerInterceptor {
     private JwtUtility jwtUtil;
     @Autowired
     private ChefRepository chefRepository;
+    @Autowired
+    private LogoutService logoutService;
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, Object handler) throws Exception{
-//        log.info("Passed from auth middleware");
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
@@ -42,6 +44,15 @@ public class ChefAuthInterceptor implements HandlerInterceptor {
         }
 
         if (!jwtUtil.validateToken(accessToken)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{" +
+                    "\"error\": \"Invalid or expired token\",\n" +
+                    "\"success\": \"false\"" +
+                    "}");
+            return false;
+        }
+
+        if (logoutService.isAccessTokenRevoked(accessToken)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{" +
                     "\"error\": \"Invalid or expired token\",\n" +

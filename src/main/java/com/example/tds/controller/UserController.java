@@ -4,6 +4,7 @@ import com.example.tds.dto.requests.common.*;
 import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.dto.responses.UserResponse;
 import com.example.tds.entity.UserEntity;
+import com.example.tds.service.LogoutService;
 import com.example.tds.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -19,9 +20,11 @@ import java.util.UUID;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
+    private final LogoutService logoutService;
 
-    public UserController(UserService userService){
+    public UserController(UserService userService, LogoutService logoutService){
         this.userService = userService;
+        this.logoutService = logoutService;
     }
 
     @PatchMapping("/{userId}/name")
@@ -93,6 +96,26 @@ public class UserController {
                         .message("Token updated successfully")
                         .success(true)
                         .data(data)
+                        .build()
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> handleLogout(
+            @RequestAttribute("user") UserEntity currentUser,
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody(required = false) @Valid LogoutRequest logoutRequest
+    ) {
+        String rawAccessToken = authorizationHeader.substring("Bearer ".length());
+        UUID actorId = currentUser.getId();
+        logoutService.revokeAccessToken(rawAccessToken, "user", actorId);
+        if (logoutRequest != null) {
+            logoutService.revokeRefreshToken(logoutRequest.getRefreshToken(), "user", actorId);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Logged out successfully")
+                        .success(true)
                         .build()
         );
     }
