@@ -63,4 +63,11 @@ public class JwtUtility {
     public UUID extractId(String token){
        return UUID.fromString(extractAllClaims(token).getSubject());
     }
+
+    public long getRemainingSeconds(String token){
+        Claims claims = extractAllClaims(token);
+        long expMs = claims.getExpiration().getTime();
+        long remainingMs = expMs - System.currentTimeMillis();
+        return Math.max(0L, remainingMs / 1000L);
+    }
 }

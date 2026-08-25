@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import com.example.tds.entity.ChefEntity;
 import com.example.tds.service.ChefService;
+import com.example.tds.service.LogoutService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RequestMapping("/api/chefs")
 public class ChefController {
     private final ChefService chefService;
+    private final LogoutService logoutService;
 
     @PatchMapping("/{chefId}/name")
     public ResponseEntity<ApiResponse> updateChefName(@PathVariable("chefId") UUID chefId, @RequestBody @Valid UpdateNameRequest updateNameRequest) {
@@ -107,6 +109,26 @@ public class ChefController {
                         .data(data)
                         .build()
                 );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> handleLogout(
+            @RequestAttribute("chef") ChefEntity currentChef,
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody(required = false) @Valid LogoutRequest logoutRequest
+    ) {
+        String rawAccessToken = authorizationHeader.substring("Bearer ".length());
+        UUID actorId = currentChef.getChefId();
+        logoutService.revokeAccessToken(rawAccessToken, "chef", actorId);
+        if (logoutRequest != null) {
+            logoutService.revokeRefreshToken(logoutRequest.getRefreshToken(), "chef", actorId);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Logged out successfully")
+                        .success(true)
+                        .build()
+        );
     }
 
     @PatchMapping("/{chefId}/location")

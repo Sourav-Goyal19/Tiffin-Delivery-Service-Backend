@@ -3,6 +3,7 @@ package com.example.tds.interceptors;
 import com.example.tds.entity.DeliveryAgentEntity;
 import com.example.tds.exception.ResourceNotFoundException;
 import com.example.tds.repository.DeliveryAgentRepository;
+import com.example.tds.service.LogoutService;
 import com.example.tds.utilities.JwtUtility;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +19,8 @@ public class DeliveryAgentAuthInterceptor implements HandlerInterceptor {
     private JwtUtility jwtUtil;
     @Autowired
     private DeliveryAgentRepository deliveryAgentRepository;
+    @Autowired
+    private LogoutService logoutService;
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, Object handler) throws Exception {
@@ -41,6 +44,15 @@ public class DeliveryAgentAuthInterceptor implements HandlerInterceptor {
         }
 
         if (!jwtUtil.validateToken(accessToken)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{" +
+                    "\"error\": \"Invalid or expired token\",\n" +
+                    "\"success\": \"false\"" +
+                    "}");
+            return false;
+        }
+
+        if (logoutService.isAccessTokenRevoked(accessToken)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{" +
                     "\"error\": \"Invalid or expired token\",\n" +

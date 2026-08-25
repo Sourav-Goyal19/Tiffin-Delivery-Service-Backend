@@ -30,6 +30,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final JwtUtility jwt;
+    private final LogoutService logoutService;
 
     long refreshTokenExpiry = 7 * 24 * 60 * 60 * 1000L;
     long accessTokenExpiry = 3 * 60 * 60 * 1000L;
@@ -108,6 +109,10 @@ public class UserService {
     public UserResponse handleRefresh(String refreshToken){
         if(refreshToken == null || refreshToken.isEmpty()){
             throw new UnauthorizedException("Refresh token not found. Please login again.");
+        }
+
+        if(logoutService.isRefreshTokenRevoked(refreshToken)){
+            throw new UnauthorizedException("Refresh token invalid or expired. Please login again.");
         }
 
         if(!jwt.validateToken(refreshToken)){

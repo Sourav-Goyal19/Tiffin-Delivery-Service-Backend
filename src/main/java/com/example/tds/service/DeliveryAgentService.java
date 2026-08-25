@@ -53,6 +53,7 @@ public class DeliveryAgentService {
     private final GeoOperations<String, UUID> geoOperations;
     private final DeliveryAgentRepository deliveryAgentRepository;
     private final GoogleMapsRoutingService googleMapsRoutingService;
+    private final LogoutService logoutService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -138,6 +139,10 @@ public class DeliveryAgentService {
     public DeliveryAgentResponse handleRefresh(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new UnauthorizedException("Refresh token not found. Please login again.");
+        }
+
+        if (logoutService.isRefreshTokenRevoked(refreshToken)) {
+            throw new UnauthorizedException("Refresh token invalid or expired. Please login again.");
         }
 
         if (!jwt.validateToken(refreshToken)) {

@@ -31,6 +31,7 @@ public class ChefService {
     private final ChefMapper chefMapper;
     private final ChefRepository chefRepository;
     private final StorageService storageService;
+    private final LogoutService logoutService;
 
     long refreshTokenExpiry = 7 * 24 * 60 * 60 * 1000L;
     long accessTokenExpiry = 3 * 60 * 60 * 1000L;
@@ -110,6 +111,10 @@ public class ChefService {
             throw new UnauthorizedException("Refresh token not found. Please login again.");
         }
 
+        if(logoutService.isRefreshTokenRevoked(refreshToken)){
+            throw new UnauthorizedException("Refresh token invalid or expired. Please login again.");
+        }
+
         if(!jwt.validateToken(refreshToken)){
             throw new UnauthorizedException("Refresh token invalid or expired. Please login again.");
         }
@@ -143,8 +148,6 @@ public class ChefService {
     public ChefResponse handleUpdateLocation(UUID chefId, UpdateLocationRequest locationRequest){
         ChefEntity existingChef = chefRepository.findByChefId(chefId)
                 .orElseThrow(()->new ResourceNotFoundException("Chef not found"));
-
-        log.error(existingChef.toString());
 
         chefRepository.updateLocation(
                 chefId,

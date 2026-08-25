@@ -10,12 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import com.example.tds.dto.responses.ApiResponse;
 import com.example.tds.entity.DeliveryAgentEntity;
 import com.example.tds.service.DeliveryAgentService;
+import com.example.tds.service.LogoutService;
 import com.example.tds.dto.responses.DeliveryAgentResponse;
 import com.example.tds.dto.responses.GoogleMapsRouteResponse;
 
 import org.springframework.validation.annotation.Validated;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +26,7 @@ import java.util.UUID;
 @RequestMapping("/api/delivery-agents")
 public class DeliveryAgentController {
     private final DeliveryAgentService deliveryAgentService;
+    private final LogoutService logoutService;
 
     @PatchMapping("/{deliveryAgentId}/name")
     public ResponseEntity<ApiResponse> updateAgentName(@PathVariable("deliveryAgentId") UUID deliveryAgentId, @RequestBody @Valid UpdateNameRequest updateNameRequest) {
@@ -91,6 +91,26 @@ public class DeliveryAgentController {
                                 "accessToken", response.getAccessToken(),
                                 "refreshToken", response.getRefreshToken()
                         ))
+                        .build()
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> handleLogout(
+            @RequestAttribute("deliveryAgent") DeliveryAgentEntity currentAgent,
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody(required = false) @Valid LogoutRequest logoutRequest
+    ) {
+        String rawAccessToken = authorizationHeader.substring("Bearer ".length());
+        UUID actorId = currentAgent.getDeliveryAgentId();
+        logoutService.revokeAccessToken(rawAccessToken, "deliveryAgent", actorId);
+        if (logoutRequest != null) {
+            logoutService.revokeRefreshToken(logoutRequest.getRefreshToken(), "deliveryAgent", actorId);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.builder()
+                        .message("Logged out successfully")
+                        .success(true)
                         .build()
         );
     }
